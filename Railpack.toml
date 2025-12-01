@@ -1,13 +1,13 @@
 # Linguagem e versão
 [project]
 name = "clarIA-api"
-runtime = "python"
-version = "3.10"
+version = "0.1.0"
 
-# Dependências
+
 [build]
-# Arquivo com dependências
+runtime = "python@3.10"
 requirements = "requirements.txt"
+env.PIP_ONLY_BINARY = ":all:"
 
 # Pasta do app
 [paths]
