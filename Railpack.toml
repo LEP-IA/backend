@@ -1,20 +1,38 @@
-# Toml
 [project]
 name = "claria-api"
 version = "0.1.0"
 
+[runtime]
+language = "python"
+version = "3.10"
+
 [build]
-# Usa Python 3.11 e instala deps
-builder = "railpack/python"
-python_version = "3.11"
-# Caminho do arquivo de dependências
-requirements = "requirements.txt"
+# Instala dependências a partir de `requirements.txt`
+commands = [
+  "pip install --no-cache-dir -r requirements.txt"
+]
+# Inclui só o que é necessário no pacote
+include = [
+  "app/**",
+  "requirements.txt",
+  "Railpack.toml"
+]
+# Opcional: exclui arquivos pesados ou irrelevantes
+exclude = [
+  ".git/**",
+  "**/__pycache__/**",
+  "**/*.pyc"
+]
 
-[run]
-# Comando de inicialização (ajuste o caminho do módulo conforme seu projeto)
-command = "uvicorn app.main:app --host 0.0.0.0 --port 8000"
-# Variáveis de ambiente necessárias
-env = { PYTHONUNBUFFERED = "1" }
+[start]
+# Comando de inicialização (ajuste host/port conforme plataforma)
+command = "uvicorn app.main:app --host 0.0.0.0 --port ${PORT}"
+# Porta que o serviço expõe
+port = 8000
 
-[assets]
-include = ["app", "requirements.txt", "Railpack.toml"]
+
+[env]
+# Defina variáveis necessárias aqui
+PYTHONDONTWRITEBYTECODE = "1"
+PYTHONUNBUFFERED = "1"
+
