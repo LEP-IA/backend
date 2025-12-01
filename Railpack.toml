@@ -1,32 +1,24 @@
+# Linguagem e versão
 [project]
-name = "claria-api"
-version = "0.1.0"
+name = "clarIA-api"
+runtime = "python"
+version = "3.11"
 
-[runtime]
-language = "python"
-version = "3.10"
-
+# Dependências
 [build]
-# Instala dependências a partir de `requirements.txt`
-commands = [
-  "pip install --no-cache-dir -r requirements.txt"
-]
-# Inclui só o que é necessário no pacote
-include = [
-  "app/**",
-  "requirements.txt",
-  "Railpack.toml"
-]
+# Arquivo com dependências
+requirements = "requirements.txt"
 
-[start]
-# Comando de inicialização (ajuste host/port conforme plataforma)
-command = "uvicorn app.main:app --host 0.0.0.0 --port ${PORT}"
+# Pasta do app
+[paths]
+root = "."
+
+# Como iniciar o serviço
+[run]
+# Comando para iniciar FastAPI via uvicorn
+command = "uvicorn app.main:app --host 0.0.0.0 --port 8000"
+
 # Porta que o serviço expõe
+[expose]
 port = 8000
-
-
-[env]
-# Defina variáveis necessárias aqui
-PYTHONDONTWRITEBYTECODE = "1"
-PYTHONUNBUFFERED = "1"
-
+protocol = "http"
