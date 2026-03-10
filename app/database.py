@@ -1,4 +1,4 @@
-# É aqui que a conexão com o database funciona 
+# Configuração de conexão com o banco de dados
 
 import os
 from sqlalchemy import create_engine
@@ -9,28 +9,29 @@ from dotenv import load_dotenv
 # Carrega as variáveis de ambiente
 load_dotenv()
 DATABASE_URL = os.getenv("DATABASE_URL")
+if not DATABASE_URL:
+    raise RuntimeError("DATABASE_URL não configurada. Defina-a no .env para um banco PostgreSQL.")
 
-# o core da conexão 
-# create_engine é quem sabe falar com o banco usando a DATABASE_URL
-engine = create_engine(DATABASE_URL)
 
-# nossa sessão com com o daatabase 
+engine = create_engine(
+    DATABASE_URL,
+    pool_pre_ping=True,   # evita conexões mortas
+)
+
+# Sessão com o banco
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-# nossos modelos em models.py herdaram aqui 
+# Base para os modelos em models.py
 Base = declarative_base()
 
-# app/database.py
 
 def get_db():
-    """
-    Função de dependência do FastAPI para gerenciar a sessão do banco de dados.
+    """Dependência do FastAPI para gerenciar a sessão do banco.
+
+    Abre uma sessão por requisição e garante o fechamento ao final.
     """
     db = SessionLocal()
     try:
         yield db
     finally:
         db.close()
-
-
-

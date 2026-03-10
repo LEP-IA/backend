@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status # Importe 'status'
 from sqlalchemy.orm import Session
-from app import models, schemas, security, crud
+from app import models, schemas, security
 from app.database import get_db
 
 
@@ -28,75 +28,62 @@ def criar_usuario(usuario: schemas.UsuarioCreate, db: Session = Depends(get_db))
     db.refresh(novo_usuario)
     return novo_usuario
 
-@router.post("/login")
-def login(login_data: schemas.UsuarioLogin, db: Session = Depends(get_db)):
+@router.post("/signup", status_code=status.HTTP_201_CREATED)
+def signup(user: schemas.SignupRequest, db: Session = Depends(get_db)):
+    """Cadastro de usuário """
+    name = user.name
+    email = user.email
+    password = user.password
+    terms_accepted = user.termsAccepted
 
-    """
-
-    Faz login verificando o hash da senha, usando um JSON no corpo da requisição.
-
-    """
-
-    # Acessa os dados através do objeto login_data
-
-    usuario = db.query(models.Usuario).filter(models.Usuario.email == login_data.email).first()
-
-
-    if not usuario or not security.verificar_senha(login_data.senha, usuario.senha_hash):
-
-        # Unifique as mensagens para evitar dar dicas sobre se o usuário existe ou se a senha está errada
-
+    if not terms_accepted:
         raise HTTPException(
-
-            status_code=status.HTTP_401_UNAUTHORIZED,
-
-            detail="E-mail ou senha incorretos."
-
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="termsAccepted deve ser true",
         )
 
-    # 1. Cria o token de acesso
+    existing = db.query(models.Usuario).filter(models.Usuario.email == email).first()
+    if existing:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="E-mail já cadastrado",
+        )
 
-    access_token = security.create_access_token(
+    senha_hash = security.gerar_hash(password)
+    novo_usuario = models.Usuario(email=email, nome=name, senha_hash=senha_hash)
+    db.add(novo_usuario)
+    db.commit()
+    db.refresh(novo_usuario)
+    return {"message": "Usuário criado com sucesso"}
 
-        data={"email": usuario.email}
+@router.post("/login", response_model=schemas.LoginResponse)
+def login(data: schemas.LoginRequest, db: Session = Depends(get_db)):
+    """Autenticação no padrão """
+    email = data.email
+    password = data.password
 
+    usuario = db.query(models.Usuario).filter(models.Usuario.email == email).first()
+    if not usuario or not security.verificar_senha(password, usuario.senha_hash):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="E-mail ou senha incorretos",
+        )
+
+    access_token = security.create_access_token(data={"email": usuario.email})
+
+    user_out = schemas.UserOut(
+        id=str(usuario.id_usuario) if hasattr(usuario, "id_usuario") else usuario.email,
+        name=usuario.nome,
+        email=usuario.email,
+        avatarUrl=usuario.avatar_url if hasattr(usuario, "avatar_url") else None,
     )
 
-    # 2. Retorna o token e o tipo (padrão Bearer)
+    return schemas.LoginResponse(token=access_token, user=user_out)
 
-    return {
-
-        "access_token": access_token,
-
-        "token_type": "bearer",
-
-        "usuario": schemas.Usuario.model_validate(usuario)
-
-    }
-
-@router.get("/me", response_model=schemas.UsuarioResponseCompleto)
-def get_meus_dados_completos(
-    db: Session = Depends(get_db),
-    current_user: models.Usuario = Depends(security.get_current_user)
+@router.post("/logout")
+def logout(
+    _body: schemas.LogoutRequest,
+    _current_user=Depends(security.get_current_user),
 ):
-    """
-    Endpoint protegido para "recarregar" o perfil.
-    
-    Retorna todos os dados do usuário logado (perfil, calendários e
-    todos os eventos aninhados com seus transportes, datas, etc.).
-    """
-    
-    # A dependência 'get_current_user' já nos dá o usuário
-    # Mas esse usuário NÃO tem os dados aninhados carregados.
-    
-    # Usamos a função do CRUD para buscar o usuário DE NOVO,
-    # mas desta vez com todos os dados.
-    usuario_data = crud.get_user_full_data(db, email=current_user.email)
-    
-    if not usuario_data:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, 
-            detail="Usuário não encontrado."
-        )
-        
-    return usuario_data
+    """Logout stateless: apenas confirma a operação."""
+    return {"message": "Logout realizado com sucesso."}

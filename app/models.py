@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, ForeignKey
+from sqlalchemy import Column, Integer, String, Text, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
 from .database import Base
 
@@ -9,6 +9,7 @@ class Usuario(Base):
     email = Column(String, primary_key=True, index=True)
     nome = Column(String)
     senha_hash = Column(Text)
+    avatar_url = Column(String, nullable=True)  # URL opcional do avatar do usuário
 
     # Relacionamentos 
     chats = relationship("ChatIA", back_populates="usuario")
@@ -48,18 +49,22 @@ class Tarefa(Base):
 
     id_tarefa = Column(Integer, primary_key=True, index=True)
 
-    # Chave estrangeira
+    # Chaves estrangeiras
     id_board = Column(Integer, ForeignKey("board.id_board"), nullable=False)
+    responsavel_email = Column(String, ForeignKey("usuario.email"), nullable=False)
+    dependencia_id = Column(Integer, ForeignKey("tarefa.id_tarefa"), nullable=True)
 
-    nome = Column(String)
-    local = Column(String) #local do evento
-    duracao = Column(String)
-    hora_inicio = Column(String)
-    hora_fim = Column(String)
-    local_de_saida = Column(String) #local de onde o usuario vai sair
-    transporte = Column(String)
-    distancia = Column(String)
+    # Campos principais da tarefa no padrão do README
+    titulo = Column(String, nullable=False)
+    descricao = Column(Text, nullable=True)
+    status = Column(String, nullable=False, index=True)  # BACKLOG, DOING, DONE
+    tag = Column(String, nullable=True)  # ex: #FRONTEND, #BACKEND
 
+    # Datas de início e fim em formato datetime
+    data_inicio = Column(DateTime, nullable=True)
+    data_fim = Column(DateTime, nullable=True)
 
-    # O back_populates aponta para a propriedade 'eventos' (plural) no modelo Calendario
+    # Relacionamentos
     board = relationship("Board", back_populates="tarefas")
+    responsavel = relationship("Usuario")
+    dependencia = relationship("Tarefa", remote_side=[id_tarefa], uselist=False)

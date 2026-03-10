@@ -1,6 +1,6 @@
-from datetime import datetime, date, time
+from datetime import datetime
 from typing import Optional, List
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr, Field
 
 # Formulário para CRIAR um usuário 
 class UsuarioCreate(BaseModel):
@@ -13,12 +13,7 @@ class Usuario(BaseModel):
     email: str
     nome: str
     class Config:
-        from_attributes = True 
-
-# Formulário para LOGIN de usuário 
-class UsuarioLogin(BaseModel):
-    email: str
-    senha: str
+        from_attributes = True
 
 # Token schemas
 class Token(BaseModel):
@@ -30,45 +25,96 @@ class TokenData(BaseModel):
     """Schema para os dados dentro do token JWT."""
     email: Optional[str] = None
 
-# Schema de criação de Tarefa (o que o usuário envia)
-class TarefaCreate(BaseModel):
-    id_board: int
-    nome: str
-    local: Optional[str] = None
-    duracao: Optional[str] = None
-    hora_inicio: Optional[str] = None
-    hora_fim: Optional[str] = None
-    local_de_saida: Optional[str] = None
-    transporte: Optional[str] = None
-    distancia: Optional[str] = None
-    # Adicione outros campos relevantes para tarefa
 
-# Schema de Leitura de Tarefa (o que o backend devolve)
-class Tarefa(BaseModel):
-    id_tarefa: int
-    nome: str
-    local: Optional[str] = None
-    duracao: Optional[str] = None
-    hora_inicio: Optional[str] = None
-    hora_fim: Optional[str] = None
-    local_de_saida: Optional[str] = None
-    transporte: Optional[str] = None
-    distancia: Optional[str] = None
-    maps_info: Optional[dict] = None
-    # Adicione outros campos relevantes para tarefa
-    class Config:
-        from_attributes = True
+class UserOut(BaseModel):
+    id: str
+    name: str
+    email: str
+    avatarUrl: Optional[str] = None
 
-# Schema para mostrar um Board com suas tarefas
-class BoardResponse(BaseModel):
-    id_board: int
-    nome: str
-    tarefas: List[Tarefa] = []
-    class Config:
-        from_attributes = True
 
-# Schema para mostrar um usuário com seus boards e tarefas
-class UsuarioResponseCompleto(Usuario):
-    boards: List[BoardResponse] = []
-    class Config:
-        from_attributes = True
+class TaskBase(BaseModel):
+    title: str
+    description: Optional[str] = None
+    status: str  # BACKLOG, DOING, DONE
+    tag: Optional[str] = None
+    startDate: Optional[datetime] = None
+    endDate: Optional[datetime] = None
+    responsibleId: str
+    dependencyId: Optional[str] = None
+
+
+class TaskCreate(BaseModel):
+    title: str
+    description: str
+    status: str = Field(..., pattern="^(BACKLOG|DOING|DONE)$")
+    tag: str
+    startDate: Optional[datetime] = None
+    endDate: Optional[datetime] = None
+    responsibleId: str
+    dependencyId: Optional[str] = None
+
+
+class TaskUpdate(BaseModel):
+    title: str
+    description: str
+    status: str = Field(..., pattern="^(BACKLOG|DOING|DONE)$")
+    tag: str
+    startDate: Optional[datetime] = None
+    endDate: Optional[datetime] = None
+    responsibleId: str
+    dependencyId: Optional[str] = None
+
+
+class TaskDependencySummary(BaseModel):
+    id: str
+    title: str
+
+class UserSummary(BaseModel):
+    id: str
+    name: str
+    email: EmailStr
+    avatarUrl: Optional[str] = None
+
+
+class TaskOut(BaseModel):
+    id: str
+    title: str
+    description: str
+    status: str
+    tag: str
+    startDate: Optional[datetime] = None
+    endDate: Optional[datetime] = None
+    responsible: UserSummary
+    dependency: Optional[TaskDependencySummary] = None
+
+
+class TaskListResponse(BaseModel):
+    tasks: List[TaskOut]
+
+class SignupRequest(BaseModel):
+    name: str
+    email: EmailStr
+    password: str
+    termsAccepted: bool
+
+
+class LoginRequest(BaseModel):
+    email: EmailStr
+    password: str
+
+
+class UserOut(BaseModel):
+    id: str
+    name: str
+    email: EmailStr
+    avatarUrl: str | None = None
+
+
+class LoginResponse(BaseModel):
+    token: str
+    user: UserOut
+
+
+class LogoutRequest(BaseModel):
+    pass

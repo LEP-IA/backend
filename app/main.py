@@ -20,7 +20,7 @@ def read_root():
     """
     return {"message": "Bem-vindo à API do ClarIA!"}
 
-# Endpoint para ver se a API está no ar 
+# Endpoint para ver se a API está no ar
 @app.get("/health")
 def health_check():
     """
@@ -28,7 +28,7 @@ def health_check():
     """
     return {"status": "ok"}
 
-#Lista de origins permitidas 
+#Lista de origins permitidas
 origins = [
     # Também é preciso colocar a url do frontend de dev local
     ""
