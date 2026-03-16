@@ -25,14 +25,6 @@ class TokenData(BaseModel):
     """Schema para os dados dentro do token JWT."""
     email: Optional[str] = None
 
-
-class UserOut(BaseModel):
-    id: str
-    name: str
-    email: str
-    avatarUrl: Optional[str] = None
-
-
 class TaskBase(BaseModel):
     title: str
     description: Optional[str] = None
