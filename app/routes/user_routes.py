@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status # Importe 'status'
 from sqlalchemy.orm import Session
 from app import models, schemas, security
 from app.database import get_db
+from app import crud
 
 
 router = APIRouter(prefix="/usuarios", tags=["Usuários"])
@@ -87,3 +88,19 @@ def logout(
 ):
     """Logout stateless: apenas confirma a operação."""
     return {"message": "Logout realizado com sucesso."}
+
+@router.get("/", response_model=schemas.UserListResponse)
+def listar_usuarios(
+    db: Session = Depends(get_db),
+    _current_user=Depends(security.get_current_user)
+):
+    """
+    Retorna a lista de todos os usuários no formato {"users": [...]}
+    Requer autenticação.
+    """
+    usuarios_db = crud.list_users(db)
+    
+    # Usa o helper para converter cada usuário individualmente
+    usuarios_formatados = [crud.build_user_out(u) for u in usuarios_db]
+    
+    return schemas.UserListResponse(users=usuarios_formatados)

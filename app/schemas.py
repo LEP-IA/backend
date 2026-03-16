@@ -110,3 +110,7 @@ class LoginResponse(BaseModel):
 
 class LogoutRequest(BaseModel):
     pass
+
+
+class UserListResponse(BaseModel):
+    users: List[UserOut]
