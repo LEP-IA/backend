@@ -76,7 +76,7 @@ def delete_task(db: Session, task_id: int) -> bool:
 # Helper para converter model em resposta do contrato
 
 def build_task_out(task: models.Tarefa) -> schemas.TaskOut:
-    responsible = schemas.UserOut(
+    responsible = schemas.UserSummary(
         id=str(task.responsavel.email),
         name=task.responsavel.nome,
         email=task.responsavel.email,
