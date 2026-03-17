@@ -12,6 +12,7 @@ app = FastAPI(title="ClarIA", version="0.1.0")
 #Lista de origins permitidas
 origins = [
     # Também é preciso colocar a url do frontend de dev local
+    "frontend-production-3d2c3.up.railway.app",
     "http://localhost:5173",
     "http://127.0.0.1:5173"
 ]
