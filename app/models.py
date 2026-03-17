@@ -52,7 +52,7 @@ class Tarefa(Base):
     # Chaves estrangeiras
     id_board = Column(Integer, ForeignKey("board.id_board"), nullable=False)
     responsavel_email = Column(String, ForeignKey("usuario.email"), nullable=False)
-    dependencia_id = Column(Integer, ForeignKey("tarefa.id_tarefa"), nullable=True)
+    dependencia_id = Column(Integer, ForeignKey("tarefa.id_tarefa", ondelete="SET NULL"), nullable=True)
 
     # Campos principais da tarefa no padrão do README
     titulo = Column(String, nullable=False)
