@@ -3,11 +3,15 @@ from fastapi import FastAPI
 from .routes import  user_routes
 from app.routes import task_routes
 from fastapi.middleware.cors import CORSMiddleware
+from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware # Adicione este import
 
 
 
 # Cria a instância da aplicação FastAPI
 app = FastAPI(title="ClarIA", version="0.1.0")
+
+# Adicione este middleware LOGO DEPOIS de criar o app
+app.add_middleware(ProxyHeadersMiddleware, trusted_hosts="*")
 
 #Lista de origins permitidas
 origins = [
