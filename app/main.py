@@ -2,6 +2,7 @@ from fastapi import FastAPI
 
 from .routes import  user_routes
 from app.routes import task_routes
+from app.routes import ml_routes  # Adiciona import do ml_routes
 from fastapi.middleware.cors import CORSMiddleware
 
 
@@ -11,6 +12,7 @@ app = FastAPI(title="ClarIA", version="0.1.0")
 
 app.include_router(user_routes.router)
 app.include_router(task_routes.router)
+app.include_router(ml_routes.router)  # Inclui o router de ml_routes
 
 # Define um endpoint (ou "rota") para a raiz da **URL
 @app.get("/")

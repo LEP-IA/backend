@@ -118,3 +118,13 @@ class LoginResponse(BaseModel):
 
 class LogoutRequest(BaseModel):
     pass
+
+class GeneRequest(BaseModel):
+    titulo: str
+    descricao: str
+
+class GeneResponse(BaseModel):
+    titulo: str
+    descricao: str
+    resolucoes: list[str]
+    nivel_complexidade: str

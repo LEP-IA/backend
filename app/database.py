@@ -18,10 +18,9 @@ engine = create_engine(
     pool_pre_ping=True,   # evita conexões mortas
 )
 
-# Sessão com o banco
+
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-# Base para os modelos em models.py
 Base = declarative_base()
 
 
