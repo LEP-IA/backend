@@ -76,7 +76,7 @@ def delete_task(db: Session, task_id: int) -> bool:
 # Helper para converter model em resposta do contrato
 
 def build_task_out(task: models.Tarefa) -> schemas.TaskOut:
-    responsible = schemas.UserOut(
+    responsible = schemas.UserSummary(
         id=str(task.responsavel.email),
         name=task.responsavel.nome,
         email=task.responsavel.email,
@@ -84,7 +84,7 @@ def build_task_out(task: models.Tarefa) -> schemas.TaskOut:
     )
     dependency = None
     if task.dependencia:
-        dependency = schemas.TaskDependencyOut(
+        dependency = schemas.TaskDependencySummary(
             id=str(task.dependencia.id_tarefa),
             title=task.dependencia.titulo,
         )
@@ -99,4 +99,27 @@ def build_task_out(task: models.Tarefa) -> schemas.TaskOut:
         endDate=task.data_fim,
         responsible=responsible,
         dependency=dependency,
+
+    )
+
+def build_user_out(user: models.Usuario) -> schemas.UserOut:
+    return schemas.UserOut(
+        id=user.email,       # No seu banco, o email é a chave primária
+        name=user.nome,      # Mapeia 'nome' para 'name'
+        email=user.email,
+        avatarUrl=user.avatar_url
+    )
+
+def list_users(db: Session) -> list[models.Usuario]:
+    """Retorna todos os usuários cadastrados."""
+    return db.query(models.Usuario).all()
+
+# Adicione ao final do seu crud.py
+def build_user_out(user: models.Usuario) -> schemas.UserOut:
+    """Converte o modelo do banco para o schema UserOut do frontend."""
+    return schemas.UserOut(
+        id=user.email,       # Usando email como ID conforme seu banco
+        name=user.nome,      # Traduzindo 'nome' para 'name'
+        email=user.email,
+        avatarUrl=user.avatar_url if hasattr(user, 'avatar_url') else None
     )

@@ -104,13 +104,6 @@ class LoginRequest(BaseModel):
     password: str
 
 
-class UserOut(BaseModel):
-    id: str
-    name: str
-    email: EmailStr
-    avatarUrl: str | None = None
-
-
 class LoginResponse(BaseModel):
     token: str
     user: UserOut
@@ -128,3 +121,7 @@ class GeneResponse(BaseModel):
     descricao: str
     resolucoes: list[str]
     nivel_complexidade: str
+
+
+class UserListResponse(BaseModel):
+    users: List[UserOut]

@@ -2,17 +2,35 @@ from fastapi import FastAPI
 
 from .routes import  user_routes
 from app.routes import task_routes
-from app.routes import ml_routes  # Adiciona import do ml_routes
+from app.routes import ml_routes
 from fastapi.middleware.cors import CORSMiddleware
+from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 
 
 
 # Cria a instância da aplicação FastAPI
 app = FastAPI(title="ClarIA", version="0.1.0")
 
+app.add_middleware(ProxyHeadersMiddleware, trusted_hosts="*")
+
+#Lista de origins permitidas
+origins = [
+    "https://frontend-production-3d2c3.up.railway.app",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173"
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials = True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 app.include_router(user_routes.router)
 app.include_router(task_routes.router)
-app.include_router(ml_routes.router)  # Inclui o router de ml_routes
+app.include_router(ml_routes.router)
 
 # Define um endpoint (ou "rota") para a raiz da **URL
 @app.get("/")
@@ -30,16 +48,3 @@ def health_check():
     """
     return {"status": "ok"}
 
-#Lista de origins permitidas
-origins = [
-    # Também é preciso colocar a url do frontend de dev local
-    ""
-]
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials = True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)

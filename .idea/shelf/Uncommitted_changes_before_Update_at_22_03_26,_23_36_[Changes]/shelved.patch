@@ -1,0 +1,718 @@
+Index: app/models.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>from sqlalchemy import Column, Integer, String, Text, ForeignKey, DateTime\nfrom sqlalchemy.orm import relationship\nfrom .database import Base\n\n# Tabelas Presentes no database \nclass Usuario(Base):\n    __tablename__ = \"usuario\"\n\n    email = Column(String, primary_key=True, index=True)\n    nome = Column(String)\n    senha_hash = Column(Text)\n    avatar_url = Column(String, nullable=True)  # URL opcional do avatar do usuário\n\n    # Relacionamentos \n    chats = relationship(\"ChatIA\", back_populates=\"usuario\")\n    boards = relationship(\"Board\", back_populates=\"usuario\")\n\nclass ChatIA(Base):\n    __tablename__ = \"chatia\"\n\n    id_chat = Column(Integer, primary_key=True, index=True)\n    pergunta = Column(String)\n    resposta = Column(String)\n    \n    # Chave estrangeira \n    usuario_email = Column(String, ForeignKey(\"usuario.email\"), nullable=False)\n\n    # Relacionamento \n    usuario = relationship(\"Usuario\", back_populates=\"chats\")\n\nclass Board(Base):\n    __tablename__ = \"board\"\n\n    id_board = Column(Integer, primary_key=True, index=True)\n    nome = Column(String)\n\n    # Chave estrangeira\n    usuario_email = Column(String, ForeignKey(\"usuario.email\"), nullable=False) # não pode ficar vazio\n\n    # Relacionamentos\n    usuario = relationship(\"Usuario\", back_populates=\"boards\")\n\n    # Um calendário tem muitos 'eventos'\n    # O back_populates aponta para a propriedade 'calendario' no modelo Evento\n    tarefas = relationship(\"Tarefa\", back_populates=\"board\")\n\nclass Tarefa(Base):\n    __tablename__ = \"tarefa\"\n\n    id_tarefa = Column(Integer, primary_key=True, index=True)\n\n    # Chaves estrangeiras\n    id_board = Column(Integer, ForeignKey(\"board.id_board\"), nullable=False)\n    responsavel_email = Column(String, ForeignKey(\"usuario.email\"), nullable=False)\n    dependencia_id = Column(Integer, ForeignKey(\"tarefa.id_tarefa\"), nullable=True)\n\n    # Campos principais da tarefa no padrão do README\n    titulo = Column(String, nullable=False)\n    descricao = Column(Text, nullable=True)\n    status = Column(String, nullable=False, index=True)  # BACKLOG, DOING, DONE\n    tag = Column(String, nullable=True)  # ex: #FRONTEND, #BACKEND\n\n    # Datas de início e fim em formato datetime\n    data_inicio = Column(DateTime, nullable=True)\n    data_fim = Column(DateTime, nullable=True)\n\n    # Relacionamentos\n    board = relationship(\"Board\", back_populates=\"tarefas\")\n    responsavel = relationship(\"Usuario\")\n    dependencia = relationship(\"Tarefa\", remote_side=[id_tarefa], uselist=False)\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/models.py b/app/models.py
+--- a/app/models.py	(revision ad3b8a5b5110f3d8f7bc28947930c8f9ea194e08)
++++ b/app/models.py	(date 1774233047033)
+@@ -52,7 +52,7 @@
+     # Chaves estrangeiras
+     id_board = Column(Integer, ForeignKey("board.id_board"), nullable=False)
+     responsavel_email = Column(String, ForeignKey("usuario.email"), nullable=False)
+-    dependencia_id = Column(Integer, ForeignKey("tarefa.id_tarefa"), nullable=True)
++    dependencia_id = Column(Integer, ForeignKey("tarefa.id_tarefa", ondelete="SET NULL"), nullable=True)
+ 
+     # Campos principais da tarefa no padrão do README
+     titulo = Column(String, nullable=False)
+Index: app/schemas.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>from datetime import datetime\nfrom typing import Optional, List\nfrom pydantic import BaseModel, EmailStr, Field\n\n# Formulário para CRIAR um usuário \nclass UsuarioCreate(BaseModel):\n    email: str\n    nome: str\n    senha: str  \n\n# Formulário para LER um usuário (o que o backend devolve)\nclass Usuario(BaseModel):\n    email: str\n    nome: str\n    class Config:\n        from_attributes = True\n\n# Token schemas\nclass Token(BaseModel):\n    \"\"\"Schema para a resposta do token de login.\"\"\"\n    access_token: str\n    token_type: str\n\nclass TokenData(BaseModel):\n    \"\"\"Schema para os dados dentro do token JWT.\"\"\"\n    email: Optional[str] = None\n\n\nclass UserOut(BaseModel):\n    id: str\n    name: str\n    email: str\n    avatarUrl: Optional[str] = None\n\n\nclass TaskBase(BaseModel):\n    title: str\n    description: Optional[str] = None\n    status: str  # BACKLOG, DOING, DONE\n    tag: Optional[str] = None\n    startDate: Optional[datetime] = None\n    endDate: Optional[datetime] = None\n    responsibleId: str\n    dependencyId: Optional[str] = None\n\n\nclass TaskCreate(BaseModel):\n    title: str\n    description: str\n    status: str = Field(..., pattern=\"^(BACKLOG|DOING|DONE)$\")\n    tag: str\n    startDate: Optional[datetime] = None\n    endDate: Optional[datetime] = None\n    responsibleId: str\n    dependencyId: Optional[str] = None\n\n\nclass TaskUpdate(BaseModel):\n    title: str\n    description: str\n    status: str = Field(..., pattern=\"^(BACKLOG|DOING|DONE)$\")\n    tag: str\n    startDate: Optional[datetime] = None\n    endDate: Optional[datetime] = None\n    responsibleId: str\n    dependencyId: Optional[str] = None\n\n\nclass TaskDependencySummary(BaseModel):\n    id: str\n    title: str\n\nclass UserSummary(BaseModel):\n    id: str\n    name: str\n    email: EmailStr\n    avatarUrl: Optional[str] = None\n\n\nclass TaskOut(BaseModel):\n    id: str\n    title: str\n    description: str\n    status: str\n    tag: str\n    startDate: Optional[datetime] = None\n    endDate: Optional[datetime] = None\n    responsible: UserSummary\n    dependency: Optional[TaskDependencySummary] = None\n\n\nclass TaskListResponse(BaseModel):\n    tasks: List[TaskOut]\n\nclass SignupRequest(BaseModel):\n    name: str\n    email: EmailStr\n    password: str\n    termsAccepted: bool\n\n\nclass LoginRequest(BaseModel):\n    email: EmailStr\n    password: str\n\n\nclass UserOut(BaseModel):\n    id: str\n    name: str\n    email: EmailStr\n    avatarUrl: str | None = None\n\n\nclass LoginResponse(BaseModel):\n    token: str\n    user: UserOut\n\n\nclass LogoutRequest(BaseModel):\n    pass\n\nclass GeneRequest(BaseModel):\n    titulo: str\n    descricao: str\n\nclass GeneResponse(BaseModel):\n    titulo: str\n    descricao: str\n    resolucoes: list[str]\n    nivel_complexidade: str\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/schemas.py b/app/schemas.py
+--- a/app/schemas.py	(revision ad3b8a5b5110f3d8f7bc28947930c8f9ea194e08)
++++ b/app/schemas.py	(date 1774233255067)
+@@ -25,14 +25,6 @@
+     """Schema para os dados dentro do token JWT."""
+     email: Optional[str] = None
+ 
+-
+-class UserOut(BaseModel):
+-    id: str
+-    name: str
+-    email: str
+-    avatarUrl: Optional[str] = None
+-
+-
+ class TaskBase(BaseModel):
+     title: str
+     description: Optional[str] = None
+@@ -119,12 +111,6 @@
+ class LogoutRequest(BaseModel):
+     pass
+ 
+-class GeneRequest(BaseModel):
+-    titulo: str
+-    descricao: str
+ 
+-class GeneResponse(BaseModel):
+-    titulo: str
+-    descricao: str
+-    resolucoes: list[str]
+-    nivel_complexidade: str
++class UserListResponse(BaseModel):
++    users: List[UserOut]
+Index: .env
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+># Variáveis de Configuração de APIs e Banco de Dados\n\n# 1. Configuração do Banco de Dados\n# O link de conexão do Render ou do seu banco de dados local\nDATABASE_URL=\"postgresql://admin:VYBF12qZFsoSVw6iRq5YUotKjzXWvzBZ@dpg-d3na4nmmcj7s73875g40-a.oregon-postgres.render.com/adasteia\"\n\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.env b/.env
+--- a/.env	(revision ad3b8a5b5110f3d8f7bc28947930c8f9ea194e08)
++++ b/.env	(date 1774233047030)
+@@ -2,5 +2,6 @@
+ 
+ # 1. Configuração do Banco de Dados
+ # O link de conexão do Render ou do seu banco de dados local
+-DATABASE_URL="postgresql://admin:VYBF12qZFsoSVw6iRq5YUotKjzXWvzBZ@dpg-d3na4nmmcj7s73875g40-a.oregon-postgres.render.com/adasteia"
++# DATABASE_URL="postgresql://admin:VYBF12qZFsoSVw6iRq5YUotKjzXWvzBZ@dpg-d3na4nmmcj7s73875g40-a.oregon-postgres.render.com/adasteia"
++DATABASE_URL="postgresql://postgres:GNxUxqqJBYgVyuxPLspvTvRVkZfZSwfR@gondola.proxy.rlwy.net:10772/railway"
+ 
+Index: .gitignore
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>venv\n.env \n__pycache__
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.gitignore b/.gitignore
+--- a/.gitignore	(revision ad3b8a5b5110f3d8f7bc28947930c8f9ea194e08)
++++ b/.gitignore	(date 1774233047031)
+@@ -1,3 +1,3 @@
+-venv
++.venv
+ .env 
+ __pycache__
+\ No newline at end of file
+Index: app/main.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>from fastapi import FastAPI\n\nfrom .routes import  user_routes\nfrom app.routes import task_routes\nfrom app.routes import ml_routes  # Adiciona import do ml_routes\nfrom fastapi.middleware.cors import CORSMiddleware\n\n\n\n# Cria a instância da aplicação FastAPI\napp = FastAPI(title=\"ClarIA\", version=\"0.1.0\")\n\napp.include_router(user_routes.router)\napp.include_router(task_routes.router)\napp.include_router(ml_routes.router)  # Inclui o router de ml_routes\n\n# Define um endpoint (ou \"rota\") para a raiz da **URL\n@app.get(\"/\")\ndef read_root():\n    \"\"\"\n    Endpoint raiz que retorna uma mensagem de boas-vindas.\n    \"\"\"\n    return {\"message\": \"Bem-vindo à API do ClarIA!\"}\n\n# Endpoint para ver se a API está no ar\n@app.get(\"/health\")\ndef health_check():\n    \"\"\"\n    Endpoint simples para verificar se a API está no ar.\n    \"\"\"\n    return {\"status\": \"ok\"}\n\n#Lista de origins permitidas\norigins = [\n    # Também é preciso colocar a url do frontend de dev local\n    \"\"\n]\n\napp.add_middleware(\n    CORSMiddleware,\n    allow_origins=origins,\n    allow_credentials = True,\n    allow_methods=[\"*\"],\n    allow_headers=[\"*\"],\n)
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/main.py b/app/main.py
+--- a/app/main.py	(revision ad3b8a5b5110f3d8f7bc28947930c8f9ea194e08)
++++ b/app/main.py	(date 1774233047032)
+@@ -4,12 +4,32 @@
+ from app.routes import task_routes
+ from app.routes import ml_routes  # Adiciona import do ml_routes
+ from fastapi.middleware.cors import CORSMiddleware
++from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware # Adicione este import
+ 
+ 
+ 
+ # Cria a instância da aplicação FastAPI
+ app = FastAPI(title="ClarIA", version="0.1.0")
+ 
++# Adicione este middleware LOGO DEPOIS de criar o app
++app.add_middleware(ProxyHeadersMiddleware, trusted_hosts="*")
++
++#Lista de origins permitidas
++origins = [
++    # Também é preciso colocar a url do frontend de dev local
++    "https://frontend-production-3d2c3.up.railway.app",
++    "http://localhost:5173",
++    "http://127.0.0.1:5173"
++]
++
++app.add_middleware(
++    CORSMiddleware,
++    allow_origins=origins,
++    allow_credentials = True,
++    allow_methods=["*"],
++    allow_headers=["*"],
++)
++
+ app.include_router(user_routes.router)
+ app.include_router(task_routes.router)
+ app.include_router(ml_routes.router)  # Inclui o router de ml_routes
+@@ -28,18 +48,4 @@
+     """
+     Endpoint simples para verificar se a API está no ar.
+     """
+-    return {"status": "ok"}
+-
+-#Lista de origins permitidas
+-origins = [
+-    # Também é preciso colocar a url do frontend de dev local
+-    ""
+-]
+-
+-app.add_middleware(
+-    CORSMiddleware,
+-    allow_origins=origins,
+-    allow_credentials = True,
+-    allow_methods=["*"],
+-    allow_headers=["*"],
+-)
+\ No newline at end of file
++    return {"status": "ok"}
+\ No newline at end of file
+Index: alembic.ini
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/alembic.ini b/alembic.ini
+new file mode 100644
+--- /dev/null	(date 1774233047031)
++++ b/alembic.ini	(date 1774233047031)
+@@ -0,0 +1,147 @@
++# A generic, single database configuration.
++
++[alembic]
++# path to migration scripts.
++# this is typically a path given in POSIX (e.g. forward slashes)
++# format, relative to the token %(here)s which refers to the location of this
++# ini file
++script_location = %(here)s/migrations
++
++# template used to generate migration file names; The default value is %%(rev)s_%%(slug)s
++# Uncomment the line below if you want the files to be prepended with date and time
++# see https://alembic.sqlalchemy.org/en/latest/tutorial.html#editing-the-ini-file
++# for all available tokens
++# file_template = %%(year)d_%%(month).2d_%%(day).2d_%%(hour).2d%%(minute).2d-%%(rev)s_%%(slug)s
++
++# sys.path path, will be prepended to sys.path if present.
++# defaults to the current working directory.  for multiple paths, the path separator
++# is defined by "path_separator" below.
++prepend_sys_path = .
++
++
++# timezone to use when rendering the date within the migration file
++# as well as the filename.
++# If specified, requires the tzdata library which can be installed by adding
++# `alembic[tz]` to the pip requirements.
++# string value is passed to ZoneInfo()
++# leave blank for localtime
++# timezone =
++
++# max length of characters to apply to the "slug" field
++# truncate_slug_length = 40
++
++# set to 'true' to run the environment during
++# the 'revision' command, regardless of autogenerate
++# revision_environment = false
++
++# set to 'true' to allow .pyc and .pyo files without
++# a source .py file to be detected as revisions in the
++# versions/ directory
++# sourceless = false
++
++# version location specification; This defaults
++# to <script_location>/versions.  When using multiple version
++# directories, initial revisions must be specified with --version-path.
++# The path separator used here should be the separator specified by "path_separator"
++# below.
++# version_locations = %(here)s/bar:%(here)s/bat:%(here)s/alembic/versions
++
++# path_separator; This indicates what character is used to split lists of file
++# paths, including version_locations and prepend_sys_path within configparser
++# files such as alembic.ini.
++# The default rendered in new alembic.ini files is "os", which uses os.pathsep
++# to provide os-dependent path splitting.
++#
++# Note that in order to support legacy alembic.ini files, this default does NOT
++# take place if path_separator is not present in alembic.ini.  If this
++# option is omitted entirely, fallback logic is as follows:
++#
++# 1. Parsing of the version_locations option falls back to using the legacy
++#    "version_path_separator" key, which if absent then falls back to the legacy
++#    behavior of splitting on spaces and/or commas.
++# 2. Parsing of the prepend_sys_path option falls back to the legacy
++#    behavior of splitting on spaces, commas, or colons.
++#
++# Valid values for path_separator are:
++#
++# path_separator = :
++# path_separator = ;
++# path_separator = space
++# path_separator = newline
++#
++# Use os.pathsep. Default configuration used for new projects.
++path_separator = os
++
++# set to 'true' to search source files recursively
++# in each "version_locations" directory
++# new in Alembic version 1.10
++# recursive_version_locations = false
++
++# the output encoding used when revision files
++# are written from script.py.mako
++# output_encoding = utf-8
++
++# database URL.  This is consumed by the user-maintained env.py script only.
++# other means of configuring database URLs may be customized within the env.py
++# file.
++sqlalchemy.url = postgresql://postgres:GNxUxqqJBYgVyuxPLspvTvRVkZfZSwfR@gondola.proxy.rlwy.net:10772/railway
++
++
++[post_write_hooks]
++# post_write_hooks defines scripts or Python functions that are run
++# on newly generated revision scripts.  See the documentation for further
++# detail and examples
++
++# format using "black" - use the console_scripts runner, against the "black" entrypoint
++# hooks = black
++# black.type = console_scripts
++# black.entrypoint = black
++# black.options = -l 79 REVISION_SCRIPT_FILENAME
++
++# lint with attempts to fix using "ruff" - use the module runner, against the "ruff" module
++# hooks = ruff
++# ruff.type = module
++# ruff.module = ruff
++# ruff.options = check --fix REVISION_SCRIPT_FILENAME
++
++# Alternatively, use the exec runner to execute a binary found on your PATH
++# hooks = ruff
++# ruff.type = exec
++# ruff.executable = ruff
++# ruff.options = check --fix REVISION_SCRIPT_FILENAME
++
++# Logging configuration.  This is also consumed by the user-maintained
++# env.py script only.
++[loggers]
++keys = root,sqlalchemy,alembic
++
++[handlers]
++keys = console
++
++[formatters]
++keys = generic
++
++[logger_root]
++level = WARNING
++handlers = console
++qualname =
++
++[logger_sqlalchemy]
++level = WARNING
++handlers =
++qualname = sqlalchemy.engine
++
++[logger_alembic]
++level = INFO
++handlers =
++qualname = alembic
++
++[handler_console]
++class = StreamHandler
++args = (sys.stderr,)
++level = NOTSET
++formatter = generic
++
++[formatter_generic]
++format = %(levelname)-5.5s [%(name)s] %(message)s
++datefmt = %H:%M:%S
+Index: migrations/env.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/migrations/env.py b/migrations/env.py
+new file mode 100644
+--- /dev/null	(date 1774233047036)
++++ b/migrations/env.py	(date 1774233047036)
+@@ -0,0 +1,89 @@
++import sys
++import os
++
++from logging.config import fileConfig
++
++from sqlalchemy import engine_from_config
++from sqlalchemy import pool
++
++from alembic import context
++
++# Garante que o Python encontre a pasta 'app'
++sys.path.insert(0, os.path.realpath(os.path.join(os.path.dirname(__file__), '..')))
++
++# Importa o seu Base e seus Modelos ---
++from app.database import Base
++# Importar os modelos é fundamental para o 'autogenerate' detectar as tabelas
++from app.models import Usuario, Board, Tarefa, ChatIA
++
++# this is the Alembic Config object, which provides
++# access to the values within the .ini file in use.
++config = context.config
++
++# Interpret the config file for Python logging.
++# This line sets up loggers basically.
++if config.config_file_name is not None:
++    fileConfig(config.config_file_name)
++
++# add your model's MetaData object here
++# for 'autogenerate' support
++# from myapp import mymodel
++# target_metadata = mymodel.Base.metadata
++target_metadata = Base.metadata
++
++# other values from the config, defined by the needs of env.py,
++# can be acquired:
++# my_important_option = config.get_main_option("my_important_option")
++# ... etc.
++
++
++def run_migrations_offline() -> None:
++    """Run migrations in 'offline' mode.
++
++    This configures the context with just a URL
++    and not an Engine, though an Engine is acceptable
++    here as well.  By skipping the Engine creation
++    we don't even need a DBAPI to be available.
++
++    Calls to context.execute() here emit the given string to the
++    script output.
++
++    """
++    url = config.get_main_option("sqlalchemy.url")
++    context.configure(
++        url=url,
++        target_metadata=target_metadata,
++        literal_binds=True,
++        dialect_opts={"paramstyle": "named"},
++    )
++
++    with context.begin_transaction():
++        context.run_migrations()
++
++
++def run_migrations_online() -> None:
++    """Run migrations in 'online' mode.
++
++    In this scenario we need to create an Engine
++    and associate a connection with the context.
++
++    """
++    connectable = engine_from_config(
++        config.get_section(config.config_ini_section, {}),
++        prefix="sqlalchemy.",
++        poolclass=pool.NullPool,
++    )
++
++    with connectable.connect() as connection:
++        context.configure(
++            connection=connection, target_metadata=target_metadata
++        )
++
++        with context.begin_transaction():
++            context.run_migrations()
++
++
++if context.is_offline_mode():
++    run_migrations_offline()
++else:
++    run_migrations_online()
+Index: app/security.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>import os\nfrom datetime import datetime, timedelta, timezone\nfrom typing import Optional\nfrom jose import JWTError, jwt\nfrom passlib.context import CryptContext\nfrom fastapi import HTTPException, status, Depends\nfrom fastapi.security import OAuth2PasswordBearer\nfrom sqlalchemy.orm import Session\nfrom . import models\nfrom .database import get_db\n# Configuração do PassLib para hashing de senhas\npwd_context = CryptContext(schemes=[\"bcrypt\"], deprecated=\"auto\")\n# Funções de segurança relacionadas a senhas e tokens JWT\ndef gerar_hash(senha: str) -> str:\n    \"\"\"\n    Recebe uma senha em texto puro e devolve o hash seguro dela.\n    \"\"\"\n    return pwd_context.hash(senha)\n# Verifica se a senha bate com o hash\ndef verificar_senha(senha: str, senha_hash: str) -> bool:\n    \"\"\"\n    Compara a senha digitada com o hash salvo no banco.\n    Retorna True se for a mesma senha.\n    \"\"\"\n    return pwd_context.verify(senha, senha_hash)\n# Configurações do JWT\nSECRET_KEY = os.getenv(\"JWT_SECRET_KEY\", \"ni=q*`986pk~c*,*sK!D]=iE@_Zfbqk9xe3T>p2$A*Zu9Xxuv0\") \nALGORITHM = \"HS256\"\nACCESS_TOKEN_EXPIRE_MINUTES = 30\noauth2_scheme = OAuth2PasswordBearer(tokenUrl=\"/usuarios/login\")\n# Cria o token de acesso\ndef create_access_token(data: dict, expires_delta: Optional[timedelta] = None):\n    \"\"\" Cria o JWT. Recebe um dicionário (payload) e um tempo de expiração. \"\"\"\n    to_encode = data.copy()\n    if expires_delta:\n        expire = datetime.now(timezone.utc) + expires_delta\n    else:\n        expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)\n    \n    # Adiciona a data de expiração ao payload\n    to_encode.update({\"exp\": expire, \"sub\": \"access_token\"})\n    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)\n    return encoded_jwt\n# Dependência do FastAPI: Obtém o usuário atual a partir do token\ndef get_current_user(\n    db: Session = Depends(get_db), \n    token: str = Depends(oauth2_scheme)\n) -> models.Usuario:\n    \"\"\" \n    Dependência do FastAPI: Verifica o token, decodifica, e retorna o objeto Usuário do DB.\n    É usada em todas as rotas protegidas (ex: /eventos/).\n    \"\"\"\n    # Exceção padrão para credenciais inválidas\n    credentials_exception = HTTPException(\n        status_code=status.HTTP_401_UNAUTHORIZED,\n        detail=\"Credenciais inválidas ou token expirado\",\n        headers={\"WWW-Authenticate\": \"Bearer\"},\n    )\n    try:\n        # 1. Decodifica o token\n        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])\n        # O dado que identifica o usuário é o email\n        email: str = payload.get(\"email\") \n        if email is None:\n            raise credentials_exception\n            \n    except JWTError:\n        raise credentials_exception\n\n    # 2. Busca o usuário no banco de dados\n    user = db.query(models.Usuario).filter(models.Usuario.email == email).first()\n    if user is None:\n        # Se o token for válido, mas o usuário não existir mais\n        raise credentials_exception \n        \n    return user
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/security.py b/app/security.py
+--- a/app/security.py	(revision ad3b8a5b5110f3d8f7bc28947930c8f9ea194e08)
++++ b/app/security.py	(date 1774233047034)
+@@ -26,7 +26,7 @@
+ # Configurações do JWT
+ SECRET_KEY = os.getenv("JWT_SECRET_KEY", "ni=q*`986pk~c*,*sK!D]=iE@_Zfbqk9xe3T>p2$A*Zu9Xxuv0") 
+ ALGORITHM = "HS256"
+-ACCESS_TOKEN_EXPIRE_MINUTES = 30
++ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24
+ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/usuarios/login")
+ # Cria o token de acesso
+ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
+Index: app/crud.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>from sqlalchemy.orm import Session\nfrom . import models, schemas\n\n\ndef get_task_by_id(db: Session, task_id: int) -> models.Tarefa | None:\n    return db.query(models.Tarefa).filter(models.Tarefa.id_tarefa == task_id).first()\n\n\ndef list_tasks(db: Session) -> list[models.Tarefa]:\n    return db.query(models.Tarefa).all()\n\n\ndef create_task(db: Session, task_in: schemas.TaskCreate) -> models.Tarefa:\n    # Busca responsável\n    responsavel = db.query(models.Usuario).filter(models.Usuario.email == task_in.responsibleId).first()\n    if not responsavel:\n        raise ValueError(\"Responsável não encontrado\")\n\n    dependencia = None\n    if task_in.dependencyId:\n        dependencia = db.query(models.Tarefa).filter(models.Tarefa.id_tarefa == int(task_in.dependencyId)).first()\n\n    db_task = models.Tarefa(\n        id_board=1,  # placeholder: board padrão/simples, pode ser ajustado conforme regra de negócio\n        responsavel_email=responsavel.email,\n        titulo=task_in.title,\n        descricao=task_in.description,\n        status=task_in.status,\n        tag=task_in.tag,\n        data_inicio=task_in.startDate,\n        data_fim=task_in.endDate,\n        dependencia_id=dependencia.id_tarefa if dependencia else None,\n    )\n    db.add(db_task)\n    db.commit()\n    db.refresh(db_task)\n    return db_task\n\n\ndef update_task(db: Session, task_id: int, task_in: schemas.TaskUpdate) -> models.Tarefa | None:\n    task_db = get_task_by_id(db, task_id)\n    if not task_db:\n        return None\n\n    responsavel = db.query(models.Usuario).filter(models.Usuario.email == task_in.responsibleId).first()\n    if not responsavel:\n        raise ValueError(\"Responsável não encontrado\")\n\n    dependencia = None\n    if task_in.dependencyId:\n        dependencia = db.query(models.Tarefa).filter(models.Tarefa.id_tarefa == int(task_in.dependencyId)).first()\n\n    task_db.titulo = task_in.title\n    task_db.descricao = task_in.description\n    task_db.status = task_in.status\n    task_db.tag = task_in.tag\n    task_db.data_inicio = task_in.startDate\n    task_db.data_fim = task_in.endDate\n    task_db.responsavel_email = responsavel.email\n    task_db.dependencia_id = dependencia.id_tarefa if dependencia else None\n\n    db.commit()\n    db.refresh(task_db)\n    return task_db\n\n\ndef delete_task(db: Session, task_id: int) -> bool:\n    task_db = get_task_by_id(db, task_id)\n    if not task_db:\n        return False\n    db.delete(task_db)\n    db.commit()\n    return True\n\n\n# Helper para converter model em resposta do contrato\n\ndef build_task_out(task: models.Tarefa) -> schemas.TaskOut:\n    responsible = schemas.UserOut(\n        id=str(task.responsavel.email),\n        name=task.responsavel.nome,\n        email=task.responsavel.email,\n        avatarUrl=None,\n    )\n    dependency = None\n    if task.dependencia:\n        dependency = schemas.TaskDependencyOut(\n            id=str(task.dependencia.id_tarefa),\n            title=task.dependencia.titulo,\n        )\n\n    return schemas.TaskOut(\n        id=str(task.id_tarefa),\n        title=task.titulo,\n        description=task.descricao,\n        status=task.status,\n        tag=task.tag,\n        startDate=task.data_inicio,\n        endDate=task.data_fim,\n        responsible=responsible,\n        dependency=dependency,\n    )\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/crud.py b/app/crud.py
+--- a/app/crud.py	(revision ad3b8a5b5110f3d8f7bc28947930c8f9ea194e08)
++++ b/app/crud.py	(date 1774233047032)
+@@ -76,7 +76,7 @@
+ # Helper para converter model em resposta do contrato
+ 
+ def build_task_out(task: models.Tarefa) -> schemas.TaskOut:
+-    responsible = schemas.UserOut(
++    responsible = schemas.UserSummary(
+         id=str(task.responsavel.email),
+         name=task.responsavel.nome,
+         email=task.responsavel.email,
+@@ -84,7 +84,7 @@
+     )
+     dependency = None
+     if task.dependencia:
+-        dependency = schemas.TaskDependencyOut(
++        dependency = schemas.TaskDependencySummary(
+             id=str(task.dependencia.id_tarefa),
+             title=task.dependencia.titulo,
+         )
+@@ -100,3 +100,25 @@
+         responsible=responsible,
+         dependency=dependency,
+     )
++
++def build_user_out(user: models.Usuario) -> schemas.UserOut:
++    return schemas.UserOut(
++        id=user.email,       # No seu banco, o email é a chave primária
++        name=user.nome,      # Mapeia 'nome' para 'name'
++        email=user.email,
++        avatarUrl=user.avatar_url
++    )
++
++def list_users(db: Session) -> list[models.Usuario]:
++    """Retorna todos os usuários cadastrados."""
++    return db.query(models.Usuario).all()
++
++# Adicione ao final do seu crud.py
++def build_user_out(user: models.Usuario) -> schemas.UserOut:
++    """Converte o modelo do banco para o schema UserOut do frontend."""
++    return schemas.UserOut(
++        id=user.email,       # Usando email como ID conforme seu banco
++        name=user.nome,      # Traduzindo 'nome' para 'name'
++        email=user.email,
++        avatarUrl=user.avatar_url if hasattr(user, 'avatar_url') else None
++    )
+Index: migrations/script.py.mako
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/migrations/script.py.mako b/migrations/script.py.mako
+new file mode 100644
+--- /dev/null	(date 1774233047036)
++++ b/migrations/script.py.mako	(date 1774233047036)
+@@ -0,0 +1,28 @@
++"""${message}
++
++Revision ID: ${up_revision}
++Revises: ${down_revision | comma,n}
++Create Date: ${create_date}
++
++"""
++from typing import Sequence, Union
++
++from alembic import op
++import sqlalchemy as sa
++${imports if imports else ""}
++
++# revision identifiers, used by Alembic.
++revision: str = ${repr(up_revision)}
++down_revision: Union[str, Sequence[str], None] = ${repr(down_revision)}
++branch_labels: Union[str, Sequence[str], None] = ${repr(branch_labels)}
++depends_on: Union[str, Sequence[str], None] = ${repr(depends_on)}
++
++
++def upgrade() -> None:
++    """Upgrade schema."""
++    ${upgrades if upgrades else "pass"}
++
++
++def downgrade() -> None:
++    """Downgrade schema."""
++    ${downgrades if downgrades else "pass"}
+Index: migrations/versions/29eb68aad3dc_inicial_railway_limpo.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/migrations/versions/29eb68aad3dc_inicial_railway_limpo.py b/migrations/versions/29eb68aad3dc_inicial_railway_limpo.py
+new file mode 100644
+--- /dev/null	(date 1774233047037)
++++ b/migrations/versions/29eb68aad3dc_inicial_railway_limpo.py	(date 1774233047037)
+@@ -0,0 +1,82 @@
++"""inicial_railway_limpo
++
++Revision ID: 29eb68aad3dc
++Revises: 
++Create Date: 2026-03-16 00:14:27.667426
++
++"""
++from typing import Sequence, Union
++
++from alembic import op
++import sqlalchemy as sa
++
++
++# revision identifiers, used by Alembic.
++revision: str = '29eb68aad3dc'
++down_revision: Union[str, Sequence[str], None] = None
++branch_labels: Union[str, Sequence[str], None] = None
++depends_on: Union[str, Sequence[str], None] = None
++
++
++def upgrade() -> None:
++    """Upgrade schema."""
++    # ### commands auto generated by Alembic - please adjust! ###
++    op.create_table('usuario',
++    sa.Column('email', sa.String(), nullable=False),
++    sa.Column('nome', sa.String(), nullable=True),
++    sa.Column('senha_hash', sa.Text(), nullable=True),
++    sa.Column('avatar_url', sa.String(), nullable=True),
++    sa.PrimaryKeyConstraint('email')
++    )
++    op.create_index(op.f('ix_usuario_email'), 'usuario', ['email'], unique=False)
++    op.create_table('board',
++    sa.Column('id_board', sa.Integer(), nullable=False),
++    sa.Column('nome', sa.String(), nullable=True),
++    sa.Column('usuario_email', sa.String(), nullable=False),
++    sa.ForeignKeyConstraint(['usuario_email'], ['usuario.email'], ),
++    sa.PrimaryKeyConstraint('id_board')
++    )
++    op.create_index(op.f('ix_board_id_board'), 'board', ['id_board'], unique=False)
++    op.create_table('chatia',
++    sa.Column('id_chat', sa.Integer(), nullable=False),
++    sa.Column('pergunta', sa.String(), nullable=True),
++    sa.Column('resposta', sa.String(), nullable=True),
++    sa.Column('usuario_email', sa.String(), nullable=False),
++    sa.ForeignKeyConstraint(['usuario_email'], ['usuario.email'], ),
++    sa.PrimaryKeyConstraint('id_chat')
++    )
++    op.create_index(op.f('ix_chatia_id_chat'), 'chatia', ['id_chat'], unique=False)
++    op.create_table('tarefa',
++    sa.Column('id_tarefa', sa.Integer(), nullable=False),
++    sa.Column('id_board', sa.Integer(), nullable=False),
++    sa.Column('responsavel_email', sa.String(), nullable=False),
++    sa.Column('dependencia_id', sa.Integer(), nullable=True),
++    sa.Column('titulo', sa.String(), nullable=False),
++    sa.Column('descricao', sa.Text(), nullable=True),
++    sa.Column('status', sa.String(), nullable=False),
++    sa.Column('tag', sa.String(), nullable=True),
++    sa.Column('data_inicio', sa.DateTime(), nullable=True),
++    sa.Column('data_fim', sa.DateTime(), nullable=True),
++    sa.ForeignKeyConstraint(['dependencia_id'], ['tarefa.id_tarefa'], ),
++    sa.ForeignKeyConstraint(['id_board'], ['board.id_board'], ),
++    sa.ForeignKeyConstraint(['responsavel_email'], ['usuario.email'], ),
++    sa.PrimaryKeyConstraint('id_tarefa')
++    )
++    op.create_index(op.f('ix_tarefa_id_tarefa'), 'tarefa', ['id_tarefa'], unique=False)
++    op.create_index(op.f('ix_tarefa_status'), 'tarefa', ['status'], unique=False)
++    # ### end Alembic commands ###
++
++
++def downgrade() -> None:
++    """Downgrade schema."""
++    # ### commands auto generated by Alembic - please adjust! ###
++    op.drop_index(op.f('ix_tarefa_status'), table_name='tarefa')
++    op.drop_index(op.f('ix_tarefa_id_tarefa'), table_name='tarefa')
++    op.drop_table('tarefa')
++    op.drop_index(op.f('ix_chatia_id_chat'), table_name='chatia')
++    op.drop_table('chatia')
++    op.drop_index(op.f('ix_board_id_board'), table_name='board')
++    op.drop_table('board')
++    op.drop_index(op.f('ix_usuario_email'), table_name='usuario')
++    op.drop_table('usuario')
++    # ### end Alembic commands ###
+Index: migrations/README
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/migrations/README b/migrations/README
+new file mode 100644
+--- /dev/null	(date 1774233047035)
++++ b/migrations/README	(date 1774233047035)
+@@ -0,0 +1,1 @@
++Generic single-database configuration.
+\ No newline at end of file
+Index: app/routes/user_routes.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>from fastapi import APIRouter, Depends, HTTPException, status # Importe 'status'\nfrom sqlalchemy.orm import Session\nfrom app import models, schemas, security\nfrom app.database import get_db\n\n\nrouter = APIRouter(prefix=\"/usuarios\", tags=[\"Usuários\"])\n\n@router.post(\"/\", response_model=schemas.Usuario)\ndef criar_usuario(usuario: schemas.UsuarioCreate, db: Session = Depends(get_db)):\n    \"\"\"\n    Cria um novo usuário com senha criptografada.\n    \"\"\"\n    # Verifica se o e-mail já existe\n    usuario_existente = db.query(models.Usuario).filter(models.Usuario.email == usuario.email).first()\n    if usuario_existente:\n        raise HTTPException(status_code=400, detail=\"E-mail já cadastrado.\")\n\n    # Criptografa a senha antes de salvar\n    senha_hash = security.gerar_hash(usuario.senha)\n    novo_usuario = models.Usuario(\n        email=usuario.email,\n        nome=usuario.nome,\n        senha_hash=senha_hash\n    )\n    db.add(novo_usuario)\n    db.commit()\n    db.refresh(novo_usuario)\n    return novo_usuario\n\n@router.post(\"/signup\", status_code=status.HTTP_201_CREATED)\ndef signup(user: schemas.SignupRequest, db: Session = Depends(get_db)):\n    \"\"\"Cadastro de usuário \"\"\"\n    name = user.name\n    email = user.email\n    password = user.password\n    terms_accepted = user.termsAccepted\n\n    if not terms_accepted:\n        raise HTTPException(\n            status_code=status.HTTP_400_BAD_REQUEST,\n            detail=\"termsAccepted deve ser true\",\n        )\n\n    existing = db.query(models.Usuario).filter(models.Usuario.email == email).first()\n    if existing:\n        raise HTTPException(\n            status_code=status.HTTP_409_CONFLICT,\n            detail=\"E-mail já cadastrado\",\n        )\n\n    senha_hash = security.gerar_hash(password)\n    novo_usuario = models.Usuario(email=email, nome=name, senha_hash=senha_hash)\n    db.add(novo_usuario)\n    db.commit()\n    db.refresh(novo_usuario)\n    return {\"message\": \"Usuário criado com sucesso\"}\n\n@router.post(\"/login\", response_model=schemas.LoginResponse)\ndef login(data: schemas.LoginRequest, db: Session = Depends(get_db)):\n    \"\"\"Autenticação no padrão \"\"\"\n    email = data.email\n    password = data.password\n\n    usuario = db.query(models.Usuario).filter(models.Usuario.email == email).first()\n    if not usuario or not security.verificar_senha(password, usuario.senha_hash):\n        raise HTTPException(\n            status_code=status.HTTP_401_UNAUTHORIZED,\n            detail=\"E-mail ou senha incorretos\",\n        )\n\n    access_token = security.create_access_token(data={\"email\": usuario.email})\n\n    user_out = schemas.UserOut(\n        id=str(usuario.id_usuario) if hasattr(usuario, \"id_usuario\") else usuario.email,\n        name=usuario.nome,\n        email=usuario.email,\n        avatarUrl=usuario.avatar_url if hasattr(usuario, \"avatar_url\") else None,\n    )\n\n    return schemas.LoginResponse(token=access_token, user=user_out)\n\n@router.post(\"/logout\")\ndef logout(\n    _body: schemas.LogoutRequest,\n    _current_user=Depends(security.get_current_user),\n):\n    \"\"\"Logout stateless: apenas confirma a operação.\"\"\"\n    return {\"message\": \"Logout realizado com sucesso.\"}
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/routes/user_routes.py b/app/routes/user_routes.py
+--- a/app/routes/user_routes.py	(revision ad3b8a5b5110f3d8f7bc28947930c8f9ea194e08)
++++ b/app/routes/user_routes.py	(date 1774233047033)
+@@ -2,6 +2,7 @@
+ from sqlalchemy.orm import Session
+ from app import models, schemas, security
+ from app.database import get_db
++from app import crud
+ 
+ 
+ router = APIRouter(prefix="/usuarios", tags=["Usuários"])
+@@ -86,4 +87,20 @@
+     _current_user=Depends(security.get_current_user),
+ ):
+     """Logout stateless: apenas confirma a operação."""
+-    return {"message": "Logout realizado com sucesso."}
+\ No newline at end of file
++    return {"message": "Logout realizado com sucesso."}
++
++@router.get("/", response_model=schemas.UserListResponse)
++def listar_usuarios(
++    db: Session = Depends(get_db),
++    _current_user=Depends(security.get_current_user)
++):
++    """
++    Retorna a lista de todos os usuários no formato {"users": [...]}
++    Requer autenticação.
++    """
++    usuarios_db = crud.list_users(db)
++    
++    # Usa o helper para converter cada usuário individualmente
++    usuarios_formatados = [crud.build_user_out(u) for u in usuarios_db]
++    
++    return schemas.UserListResponse(users=usuarios_formatados)
+\ No newline at end of file
+Index: migrations/versions/7c15261ef02a_add_ondelete_set_null_tarefa.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/migrations/versions/7c15261ef02a_add_ondelete_set_null_tarefa.py b/migrations/versions/7c15261ef02a_add_ondelete_set_null_tarefa.py
+new file mode 100644
+--- /dev/null	(date 1774233047037)
++++ b/migrations/versions/7c15261ef02a_add_ondelete_set_null_tarefa.py	(date 1774233047037)
+@@ -0,0 +1,34 @@
++"""add_ondelete_set_null_tarefa
++
++Revision ID: 7c15261ef02a
++Revises: 29eb68aad3dc
++Create Date: 2026-03-16 21:16:34.684589
++
++"""
++from typing import Sequence, Union
++
++from alembic import op
++import sqlalchemy as sa
++
++
++# revision identifiers, used by Alembic.
++revision: str = '7c15261ef02a'
++down_revision: Union[str, Sequence[str], None] = '29eb68aad3dc'
++branch_labels: Union[str, Sequence[str], None] = None
++depends_on: Union[str, Sequence[str], None] = None
++
++
++def upgrade() -> None:
++    """Upgrade schema."""
++    # ### commands auto generated by Alembic - please adjust! ###
++    op.drop_constraint(op.f('tarefa_dependencia_id_fkey'), 'tarefa', type_='foreignkey')
++    op.create_foreign_key(None, 'tarefa', 'tarefa', ['dependencia_id'], ['id_tarefa'], ondelete='SET NULL')
++    # ### end Alembic commands ###
++
++
++def downgrade() -> None:
++    """Downgrade schema."""
++    # ### commands auto generated by Alembic - please adjust! ###
++    op.drop_constraint(None, 'tarefa', type_='foreignkey')
++    op.create_foreign_key(op.f('tarefa_dependencia_id_fkey'), 'tarefa', 'tarefa', ['dependencia_id'], ['id_tarefa'])
++    # ### end Alembic commands ###
+diff --git a/db_design.txt b/db_design.md
+rename from db_design.txt
+rename to db_design.md
