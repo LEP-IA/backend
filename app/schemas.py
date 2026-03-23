@@ -117,11 +117,27 @@ class GeneRequest(BaseModel):
     descricao: str
 
 class GeneResponse(BaseModel):
-    titulo: str
-    descricao: str
+    titulo_original: str
+    descricao_original: str
+    titulo_sugerido: str
+    descricao_sugerida: str
     resolucoes: list[str]
     nivel_complexidade: str
 
 
 class UserListResponse(BaseModel):
     users: List[UserOut]
+
+class BoardCreate(BaseModel):
+    nome: str
+
+class BoardUpdate(BaseModel):
+    nome: str
+
+class BoardOut(BaseModel):
+    id: int
+    nome: str
+    usuario_email: str
+
+class BoardListResponse(BaseModel):
+    boards: List[BoardOut]

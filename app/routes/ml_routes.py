@@ -32,7 +32,14 @@ Retorne a resposta no seguinte formato JSON:\n{{\n  "titulo": "...",\n  "descric
         response = model.generate_content(prompt)
         resposta_texto = response.text.strip()
         resposta_json = json.loads(resposta_texto)
-        return resposta_json
+        return {
+            "titulo_original": request.titulo,
+            "descricao_original": request.descricao,
+            "titulo_sugerido": resposta_json.get("titulo_sugerido", ""),
+            "descricao_sugerida": resposta_json.get("descricao_sugerida", ""),
+            "resolucoes": resposta_json.get("resolucoes", []),
+            "nivel_complexidade": resposta_json.get("nivel_complexidade", "")
+        }
     except json.JSONDecodeError:
         raise HTTPException(status_code=502, detail="Resposta da IA não está em formato JSON válido.")
     except Exception as e:
