@@ -3,6 +3,7 @@ from fastapi import FastAPI
 from .routes import  user_routes
 from app.routes import task_routes
 from app.routes import ml_routes
+from app.routes import board_routes
 from fastapi.middleware.cors import CORSMiddleware
 from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 
@@ -31,6 +32,7 @@ app.add_middleware(
 app.include_router(user_routes.router)
 app.include_router(task_routes.router)
 app.include_router(ml_routes.router)
+app.include_router(board_routes.router)  # Inclui as rotas de board
 
 # Define um endpoint (ou "rota") para a raiz da **URL
 @app.get("/")
@@ -47,4 +49,3 @@ def health_check():
     Endpoint simples para verificar se a API está no ar.
     """
     return {"status": "ok"}
-
