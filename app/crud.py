@@ -23,12 +23,17 @@ def create_task(db: Session, task_in: schemas.TaskCreate) -> models.Tarefa:
     if not responsavel:
         raise ValueError("Responsável não encontrado")
 
+    # Verifica se o board existe
+    board = db.query(models.Board).filter(models.Board.id_board == task_in.boardId).first()
+    if not board:
+        raise ValueError("Board não encontrado")
+
     dependencia = None
     if task_in.dependencyId:
         dependencia = db.query(models.Tarefa).filter(models.Tarefa.id_tarefa == int(task_in.dependencyId)).first()
 
     db_task = models.Tarefa(
-        id_board=1,  # placeholder: board padrão/simples, pode ser ajustado conforme regra de negócio
+        id_board=task_in.boardId,
         responsavel_email=responsavel.email,
         titulo=task_in.title,
         descricao=task_in.description,

@@ -49,6 +49,7 @@ class TaskCreate(BaseModel):
     description: str
     status: str = Field(..., pattern="^(BACKLOG|DOING|DONE)$")
     tag: str
+    boardId: int
     startDate: Optional[datetime] = None
     endDate: Optional[datetime] = None
     responsibleId: str
