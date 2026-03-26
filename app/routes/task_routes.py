@@ -65,3 +65,24 @@ def list_tasks(
     tasks_db = crud.list_tasks(db)
     tasks_out = [crud.build_task_out(t) for t in tasks_db]
     return schemas.TaskListResponse(tasks=tasks_out)
+
+
+@router.get("/board/{board_id}", response_model=schemas.TaskListResponse)
+def list_tasks_by_board(
+    board_id: int,
+    db: Session = Depends(get_db),
+    _usuario_logado=Depends(get_current_user), # Removi o ': models.Usuario'
+):
+    # Agora usamos o CRUD, assim como nas outras funções!
+    board_existente = crud.get_board(db, board_id)
+
+    if not board_existente:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Board não encontrado."
+        )
+
+    tasks_db = crud.list_tasks_by_board(db, board_id=board_id)
+    tasks_out = [crud.build_task_out(t) for t in tasks_db]
+    
+    return schemas.TaskListResponse(tasks=tasks_out)

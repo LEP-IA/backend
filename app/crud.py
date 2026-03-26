@@ -5,9 +5,16 @@ from . import models, schemas
 def get_task_by_id(db: Session, task_id: int) -> models.Tarefa | None:
     return db.query(models.Tarefa).filter(models.Tarefa.id_tarefa == task_id).first()
 
-
 def list_tasks(db: Session) -> list[models.Tarefa]:
+    """Retorna todas as tarefas idependente do board board."""
     return db.query(models.Tarefa).all()
+
+def list_tasks_by_board(db: Session, board_id: int) -> list[models.Tarefa]:
+    """Retorna todas as tarefas filtradas pelo ID do board."""
+    return db.query(models.Tarefa).filter(models.Tarefa.id_board == board_id).all()
+
+def get_board(db: Session, board_id: int):
+    return db.query(models.Board).filter(models.Board.id_board == board_id).first()
 
 
 def create_task(db: Session, task_in: schemas.TaskCreate) -> models.Tarefa:
