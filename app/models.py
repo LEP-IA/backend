@@ -42,7 +42,7 @@ class Board(Base):
 
     # Um calendário tem muitos 'eventos'
     # O back_populates aponta para a propriedade 'calendario' no modelo Evento
-    tarefas = relationship("Tarefa", back_populates="board")
+    tarefas = relationship("Tarefa", back_populates="board", cascade="all, delete-orphan")
 
 class Tarefa(Base):
     __tablename__ = "tarefa"
