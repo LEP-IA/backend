@@ -4,6 +4,7 @@ from app import schemas
 import google.generativeai as genai
 from dotenv import load_dotenv
 import json
+import re
 
 load_dotenv()
 
@@ -31,7 +32,18 @@ Retorne a resposta no seguinte formato JSON:\n{{\n  "titulo": "...",\n  "descric
         model = genai.GenerativeModel("gemini-3-flash-preview")
         response = model.generate_content(prompt)
         resposta_texto = response.text.strip()
-        resposta_json = json.loads(resposta_texto)
+
+        # LOG TEMPORÁRIO PARA DEBUG
+        print("Resposta bruta do Gemini:\n", resposta_texto)
+
+        # Tenta extrair o JSON da resposta usando regex
+        match = re.search(r'\{[\s\S]*\}', resposta_texto)
+        if match:
+            resposta_json_str = match.group(0)
+        else:
+            resposta_json_str = resposta_texto  # fallback
+
+        resposta_json = json.loads(resposta_json_str)
         return {
             "titulo_original": request.titulo,
             "descricao_original": request.descricao,
@@ -41,6 +53,6 @@ Retorne a resposta no seguinte formato JSON:\n{{\n  "titulo": "...",\n  "descric
             "nivel_complexidade": resposta_json.get("nivel_complexidade", "")
         }
     except json.JSONDecodeError:
-        raise HTTPException(status_code=502, detail="Resposta da IA não está em formato JSON válido.")
+        raise HTTPException(status_code=502, detail="Resposta da IA não está em formato JSON válido. Veja o log para detalhes.")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erro ao consultar Gemini: {str(e)}")
