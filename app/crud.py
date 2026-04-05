@@ -135,3 +135,19 @@ def build_user_out(user: models.Usuario) -> schemas.UserOut:
         email=user.email,
         avatarUrl=user.avatar_url if hasattr(user, 'avatar_url') else None
     )
+
+def get_user_by_email(db: Session, email: str):
+    return db.query(models.Usuario).filter(models.Usuario.email == email).first()
+
+def is_user_board_member(db: Session, board_id: int, usuario_email: str) -> bool:
+    return db.query(models.BoardMembro).filter(
+        models.BoardMembro.board_id == board_id,
+        models.BoardMembro.usuario_email == usuario_email
+    ).first() is not None
+
+def add_board_member(db: Session, board_id: int, usuario_email: str, tag: str):
+    membro = models.BoardMembro(board_id=board_id, usuario_email=usuario_email, tag=tag)
+    db.add(membro)
+    db.commit()
+    db.refresh(membro)
+    return membro

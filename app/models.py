@@ -14,6 +14,7 @@ class Usuario(Base):
     # Relacionamentos 
     chats = relationship("ChatIA", back_populates="usuario")
     boards = relationship("Board", back_populates="usuario")
+    membro_boards = relationship("BoardMembro", back_populates="usuario", cascade="all, delete-orphan")
 
 class ChatIA(Base):
     __tablename__ = "chatia"
@@ -39,6 +40,7 @@ class Board(Base):
 
     # Relacionamentos
     usuario = relationship("Usuario", back_populates="boards")
+    membros = relationship("BoardMembro", back_populates="board", cascade="all, delete-orphan")
 
     # Um calendário tem muitos 'eventos'
     # O back_populates aponta para a propriedade 'calendario' no modelo Evento
@@ -68,3 +70,14 @@ class Tarefa(Base):
     board = relationship("Board", back_populates="tarefas")
     responsavel = relationship("Usuario")
     dependencia = relationship("Tarefa", remote_side=[id_tarefa], uselist=False)
+
+class BoardMembro(Base):
+    __tablename__ = "board_membro"
+
+    id = Column(Integer, primary_key=True, index=True)
+    board_id = Column(Integer, ForeignKey("board.id_board"), nullable=False)
+    usuario_email = Column(String, ForeignKey("usuario.email"), nullable=False)
+    tag = Column(String)
+
+    board = relationship("Board", back_populates="membros")
+    usuario = relationship("Usuario", back_populates="membro_boards")

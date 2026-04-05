@@ -129,16 +129,31 @@ class GeneResponse(BaseModel):
 class UserListResponse(BaseModel):
     users: List[UserOut]
 
-class BoardCreate(BaseModel):
-    nome: str
-
-class BoardUpdate(BaseModel):
-    nome: str
-
-class BoardOut(BaseModel):
-    id: int
-    nome: str
+class BoardMembroBase(BaseModel):
     usuario_email: str
+    tag: str
+
+class BoardMembroCreate(BoardMembroBase):
+    pass
+
+class BoardMembroOut(BoardMembroBase):
+    class Config:
+        from_attributes = True
+
+class BoardBase(BaseModel):
+    nome: str
+
+class BoardCreate(BoardBase):
+    pass
+
+class BoardOut(BoardBase):
+    id_board: int
+    membros: list[BoardMembroOut] = []
+    class Config:
+        from_attributes = True
 
 class BoardListResponse(BaseModel):
     boards: List[BoardOut]
+
+class BoardUpdate(BaseModel):
+    nome: str
