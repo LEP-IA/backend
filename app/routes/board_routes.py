@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from sqlalchemy import and_
+from sqlalchemy import and_, or_
 from app import models, schemas
 from app.database import get_db
 from app.security import get_current_user
@@ -27,7 +27,12 @@ def create_board(board: schemas.BoardCreate, db: Session = Depends(get_db), user
 
 @router.get("/", response_model=schemas.BoardListResponse)
 def list_boards(db: Session = Depends(get_db), user: models.Usuario = Depends(get_current_user)):
-    boards = db.query(models.Board).filter(models.Board.usuario_email == user.email).all()
+    boards = db.query(models.Board).filter(
+        or_(
+            models.Board.usuario_email == user.email,
+            models.Board.membros.any(models.BoardMembro.usuario_email == user.email),
+        )
+    ).all()
     result = []
     for b in boards:
         membros = db.query(models.BoardMembro).filter(models.BoardMembro.board_id == b.id_board).all()
