@@ -17,6 +17,7 @@ app.add_middleware(ProxyHeadersMiddleware, trusted_hosts="*")
 #Lista de origins permitidas
 origins = [
     "https://frontend-production-3d2c3.up.railway.app",
+    "https://claria-task.up.railway.app",
     "http://localhost:5173",
     "http://127.0.0.1:5173"
 ]
