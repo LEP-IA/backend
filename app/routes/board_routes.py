@@ -76,3 +76,15 @@ def convidar_membro(board_id: int, convite: ConviteRequest, db: Session = Depend
         raise HTTPException(status_code=400, detail="Usuário já é membro do board")
     membro = crud.add_board_member(db, board_id, str(convite.email), tag="convidado")
     return {"message": f"Usuário {convite.email} convidado com sucesso"}
+
+@router.delete("/{board_id}/membros/{usuario_email}", status_code=200)
+def remover_membro_board(board_id: int, usuario_email: str, db: Session = Depends(get_db)):
+    membro = db.query(models.BoardMembro).filter(
+        models.BoardMembro.board_id == board_id,
+        models.BoardMembro.usuario_email == usuario_email
+    ).first()
+    if not membro:
+        raise HTTPException(status_code=404, detail="Usuário não é membro deste board.")
+    db.delete(membro)
+    db.commit()
+    return {"message": f"Usuário {usuario_email} removido do board {board_id}."}
