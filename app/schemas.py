@@ -168,3 +168,7 @@ class PasswordResetRequest(BaseModel):
 class PasswordResetConfirm(BaseModel):
     token: str
     new_password: str
+
+class SetDonoRequest(BaseModel):
+    board_id: int
+    usuario_email: EmailStr

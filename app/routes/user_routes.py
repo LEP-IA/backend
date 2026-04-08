@@ -161,3 +161,15 @@ def reset_password_confirm(data: schemas.PasswordResetConfirm, db: Session = Dep
     db.commit()
     redis_client.delete(f"reset:{data.token}")
     return {"message": "Senha redefinida com sucesso."}
+
+@router.post("/board/set-dono")
+def set_dono_board(data: schemas.SetDonoRequest, db: Session = Depends(get_db)):
+    membro = db.query(models.BoardMembro).filter(
+        models.BoardMembro.board_id == data.board_id,
+        models.BoardMembro.usuario_email == data.usuario_email
+    ).first()
+    if not membro:
+        raise HTTPException(status_code=404, detail="Usuário não é membro deste board.")
+    membro.tag = "dono"
+    db.commit()
+    return {"message": f"Usuário {data.usuario_email} agora é dono do board {data.board_id}."}
