@@ -26,7 +26,7 @@ def verificar_senha(senha: str, senha_hash: str) -> bool:
 # Configurações do JWT
 SECRET_KEY = os.getenv("JWT_SECRET_KEY", "ni=q*`986pk~c*,*sK!D]=iE@_Zfbqk9xe3T>p2$A*Zu9Xxuv0") 
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24
+ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 72
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/usuarios/login")
 # Cria o token de acesso
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):

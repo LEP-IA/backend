@@ -3,9 +3,40 @@ from sqlalchemy.orm import Session
 from app import models, schemas, security
 from app.database import get_db
 from app import crud
+import secrets
+from app.database import redis_client
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+import os
 
 
 router = APIRouter(prefix="/usuarios", tags=["Usuários"])
+RESET_TOKEN_EXPIRATION_SECONDS = 600
+
+BREVO_SMTP_SERVER = os.getenv("BREVO_SMTP_SERVER", "smtp-relay.brevo.com")
+BREVO_SMTP_PORT = int(os.getenv("BREVO_SMTP_PORT", 587))
+BREVO_SMTP_USER = os.getenv("BREVO_SMTP_USER")
+BREVO_SMTP_PASS = os.getenv("BREVO_SMTP_PASS")
+BREVO_FROM_EMAIL = os.getenv("BREVO_FROM_EMAIL", BREVO_SMTP_USER)
+BREVO_FROM_NAME = os.getenv("BREVO_FROM_NAME", "Equipe ClarIA")
+
+
+def send_reset_email(email: str, token: str):
+    subject = "Redefinição de senha"
+    body = f"Olá,\n\nVocê solicitou a redefinição de senha.\n\nUse este token para redefinir sua senha: {token}\n\nSe não foi você, ignore este e-mail.\n\nEquipe Claria"
+
+    msg = MIMEMultipart()
+    msg["From"] = f"{BREVO_FROM_NAME} <{BREVO_FROM_EMAIL}>"
+    msg["To"] = email
+    msg["Subject"] = subject
+    msg.attach(MIMEText(body, "plain"))
+
+    with smtplib.SMTP(BREVO_SMTP_SERVER, BREVO_SMTP_PORT) as server:
+        server.starttls()
+        server.login(BREVO_SMTP_USER, BREVO_SMTP_PASS)
+        server.sendmail(BREVO_FROM_EMAIL, email, msg.as_string())
+
 
 @router.post("/", response_model=schemas.Usuario)
 def criar_usuario(usuario: schemas.UsuarioCreate, db: Session = Depends(get_db)):
@@ -17,7 +48,6 @@ def criar_usuario(usuario: schemas.UsuarioCreate, db: Session = Depends(get_db))
     if usuario_existente:
         raise HTTPException(status_code=400, detail="E-mail já cadastrado.")
 
-    # Criptografa a senha antes de salvar
     senha_hash = security.gerar_hash(usuario.senha)
     novo_usuario = models.Usuario(
         email=usuario.email,
@@ -101,7 +131,33 @@ def listar_usuarios(
     """
     usuarios_db = crud.list_users(db)
 
-    # Usa o helper para converter cada usuário individualmente
     usuarios_formatados = [crud.build_user_out(u) for u in usuarios_db]
 
     return schemas.UserListResponse(users=usuarios_formatados)
+
+@router.post("/reset-password-request")
+def reset_password_request(data: schemas.PasswordResetRequest, db: Session = Depends(get_db)):
+    usuario = db.query(models.Usuario).filter(models.Usuario.email == data.email).first()
+    if not usuario:
+        raise HTTPException(status_code=404, detail="Usuário não encontrado.")
+    token = secrets.token_urlsafe(48)
+    redis_client.setex(f"reset:{token}", RESET_TOKEN_EXPIRATION_SECONDS, data.email)
+    try:
+        send_reset_email(data.email, token)
+        return {"message": "E-mail de confirmação enviado."}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao enviar e-mail: {str(e)}")
+
+@router.post("/reset-password-confirm")
+def reset_password_confirm(data: schemas.PasswordResetConfirm, db: Session = Depends(get_db)):
+    email = redis_client.get(f"reset:{data.token}")
+    if not email:
+        raise HTTPException(status_code=400, detail="Token inválido ou expirado.")
+    usuario = db.query(models.Usuario).filter(models.Usuario.email == email).first()
+    if not usuario:
+        raise HTTPException(status_code=404, detail="Usuário não encontrado.")
+    senha = str(data.new_password)[:72]
+    usuario.senha_hash = security.gerar_hash(senha)
+    db.commit()
+    redis_client.delete(f"reset:{data.token}")
+    return {"message": "Senha redefinida com sucesso."}

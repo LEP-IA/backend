@@ -157,3 +157,14 @@ class BoardListResponse(BaseModel):
 
 class BoardUpdate(BaseModel):
     nome: str
+
+class ResetPasswordRequest(BaseModel):
+    email: EmailStr
+    new_password: str
+
+class PasswordResetRequest(BaseModel):
+    email: EmailStr
+
+class PasswordResetConfirm(BaseModel):
+    token: str
+    new_password: str
