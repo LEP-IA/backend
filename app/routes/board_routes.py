@@ -42,9 +42,20 @@ def list_boards(db: Session = Depends(get_db), user: models.Usuario = Depends(ge
 
 @router.put("/{board_id}", response_model=schemas.BoardOut)
 def update_board(board_id: int, board: schemas.BoardUpdate, db: Session = Depends(get_db), user: models.Usuario = Depends(get_current_user)):
-    db_board = db.query(models.Board).filter(and_(models.Board.id_board == board_id, models.Board.usuario_email == user.email)).first()
+    db_board = db.query(models.Board).filter(models.Board.id_board == board_id).first()
     if not db_board:
         raise HTTPException(status_code=404, detail="Board não encontrado")
+
+    is_owner_user = db_board.usuario_email == user.email
+    is_owner_member = db.query(models.BoardMembro).filter(
+        models.BoardMembro.board_id == board_id,
+        models.BoardMembro.usuario_email == user.email,
+        models.BoardMembro.tag == "dono",
+    ).first() is not None
+
+    if not (is_owner_user or is_owner_member):
+        raise HTTPException(status_code=403, detail="Apenas o dono pode atualizar o board")
+
     db_board.nome = board.nome
     db.commit()
     db.refresh(db_board)
@@ -54,9 +65,20 @@ def update_board(board_id: int, board: schemas.BoardUpdate, db: Session = Depend
 
 @router.delete("/{board_id}", status_code=204)
 def delete_board(board_id: int, db: Session = Depends(get_db), user: models.Usuario = Depends(get_current_user)):
-    db_board = db.query(models.Board).filter(and_(models.Board.id_board == board_id, models.Board.usuario_email == user.email)).first()
+    db_board = db.query(models.Board).filter(models.Board.id_board == board_id).first()
     if not db_board:
         raise HTTPException(status_code=404, detail="Board não encontrado")
+
+    is_owner_user = db_board.usuario_email == user.email
+    is_owner_member = db.query(models.BoardMembro).filter(
+        models.BoardMembro.board_id == board_id,
+        models.BoardMembro.usuario_email == user.email,
+        models.BoardMembro.tag == "dono",
+    ).first() is not None
+
+    if not (is_owner_user or is_owner_member):
+        raise HTTPException(status_code=403, detail="Apenas o dono pode deletar o board")
+
     db.delete(db_board)
     db.commit()
     return None
@@ -67,8 +89,17 @@ def convidar_membro(board_id: int, convite: ConviteRequest, db: Session = Depend
     board = crud.get_board(db, board_id)
     if not board:
         raise HTTPException(status_code=404, detail="Board não encontrado")
-    if board.usuario_email != user.email:
+
+    is_owner_user = board.usuario_email == user.email
+    is_owner_member = db.query(models.BoardMembro).filter(
+        models.BoardMembro.board_id == board_id,
+        models.BoardMembro.usuario_email == user.email,
+        models.BoardMembro.tag == "dono",
+    ).first() is not None
+
+    if not (is_owner_user or is_owner_member):
         raise HTTPException(status_code=403, detail="Apenas o dono pode convidar membros")
+
     usuario = crud.get_user_by_email(db, str(convite.email))
     if not usuario:
         raise HTTPException(status_code=404, detail="Usuário não cadastrado")
@@ -78,7 +109,21 @@ def convidar_membro(board_id: int, convite: ConviteRequest, db: Session = Depend
     return {"message": f"Usuário {convite.email} convidado com sucesso"}
 
 @router.delete("/{board_id}/membros/{usuario_email}", status_code=200)
-def remover_membro_board(board_id: int, usuario_email: str, db: Session = Depends(get_db)):
+def remover_membro_board(board_id: int, usuario_email: str, db: Session = Depends(get_db), user: models.Usuario = Depends(get_current_user)):
+    board = db.query(models.Board).filter(models.Board.id_board == board_id).first()
+    if not board:
+        raise HTTPException(status_code=404, detail="Board não encontrado")
+
+    is_owner_user = board.usuario_email == user.email
+    is_owner_member = db.query(models.BoardMembro).filter(
+        models.BoardMembro.board_id == board_id,
+        models.BoardMembro.usuario_email == user.email,
+        models.BoardMembro.tag == "dono",
+    ).first() is not None
+
+    if not (is_owner_user or is_owner_member):
+        raise HTTPException(status_code=403, detail="Apenas o dono pode remover membros")
+
     membro = db.query(models.BoardMembro).filter(
         models.BoardMembro.board_id == board_id,
         models.BoardMembro.usuario_email == usuario_email
