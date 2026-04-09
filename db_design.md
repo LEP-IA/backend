@@ -3,10 +3,11 @@ Design de Banco de Dados para Backend ClaraIA
 - Autenticação e usuários (`/usuarios/signup`, `/usuarios/login`, `/usuarios/logout`)
 - Criação, atualização, remoção e listagem de tarefas (`/tasks`)
 
-Ou seja, vamos modelar somente:
+Ou seja, vamos modelar:
 - USUARIO
 - BOARD (quadro de tarefas, ligação com usuário)
 - TAREFA (ligada a BOARD e USUARIO)
+- BOARD_MEMBRO (membros de um board, relação N:N entre BOARD e USUARIO)
 
 
 Tabelas essenciais
@@ -84,6 +85,19 @@ Tabela central das rotas `/tasks`. Armazena os dados da tarefa com os campos nec
   - Acelera listagens por board/usuário.
 
 
+4) BOARD_MEMBRO
+---------------
+Tabela de associação que representa a relação muitos-para-muitos entre boards e usuários.
+Permite que um board tenha múltiplos membros colaboradores além do dono, e que um usuário
+seja membro de múltiplos boards.
 
-
+**Campos**
+- `id` (PK, INTEGER, index)
+  - Chave primária da tabela de associação.
+- `board_id` (FK -> BOARD.id_board, NOT NULL)
+  - Referência ao board do qual o usuário é membro.
+- `usuario_email` (FK -> USUARIO.email, NOT NULL)
+  - Referência ao usuário que é membro do board.
+- `tag` (VARCHAR, NULL)
+  - Tag opcional associada ao membro neste board.
 
