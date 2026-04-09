@@ -73,7 +73,6 @@ def list_tasks_by_board(
     db: Session = Depends(get_db),
     _usuario_logado=Depends(get_current_user), # Removi o ': models.Usuario'
 ):
-    # Agora usamos o CRUD, assim como nas outras funções!
     board_existente = crud.get_board(db, board_id)
 
     if not board_existente:

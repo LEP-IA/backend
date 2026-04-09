@@ -54,6 +54,7 @@ class TaskCreate(BaseModel):
     endDate: Optional[datetime] = None
     responsibleId: str
     dependencyId: Optional[str] = None
+    prioridade: Optional[str] = Field(None, pattern="^(baixo|médio|alto)$")
 
 
 class TaskUpdate(BaseModel):
@@ -65,6 +66,7 @@ class TaskUpdate(BaseModel):
     endDate: Optional[datetime] = None
     responsibleId: str
     dependencyId: Optional[str] = None
+    prioridade: Optional[str] = Field(None, pattern="^(baixo|médio|alto)$")
 
 
 class TaskDependencySummary(BaseModel):
@@ -88,6 +90,7 @@ class TaskOut(BaseModel):
     endDate: Optional[datetime] = None
     responsible: UserSummary
     dependency: Optional[TaskDependencySummary] = None
+    prioridade: Optional[str] = None
 
 
 class TaskListResponse(BaseModel):

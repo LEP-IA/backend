@@ -59,6 +59,9 @@ Tabela central das rotas `/tasks`. Armazena os dados da tarefa com os campos nec
   - Corresponde a `status` (BACKLOG, DOING, DONE).
 - `tag` (VARCHAR, NULL)
   - Corresponde a `tag` (ex.: `#BACKEND`, `#FRONTEND`).
+- `prioridade` (VARCHAR, NULL)
+  - Corresponde a `prioridade` (baixo, médio, alto).
+  - Campo opcional para definir a prioridade/complexidade da tarefa.
 - `data_inicio` (TIMESTAMPTZ, NULL)
   - Corresponde a `startDate`.
 - `data_fim` (TIMESTAMPTZ, NULL)
@@ -75,6 +78,7 @@ Tabela central das rotas `/tasks`. Armazena os dados da tarefa com os campos nec
   - `dependencyId` -> `dependencia_id`.
   - `responsible` (objeto) -> join com USUARIO.
   - `dependency` (objeto) -> self-join com TAREFA.
+  - `prioridade` -> `prioridade` (opcional).
 
 **Índices recomendados**
 - `IDX_tarefa_status (status)`
@@ -100,4 +104,3 @@ seja membro de múltiplos boards.
   - Referência ao usuário que é membro do board.
 - `tag` (VARCHAR, NULL)
   - Tag opcional associada ao membro neste board.
-

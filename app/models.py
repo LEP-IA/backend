@@ -2,7 +2,6 @@ from sqlalchemy import Column, Integer, String, Text, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
 from .database import Base
 
-# Tabelas Presentes no database 
 class Usuario(Base):
     __tablename__ = "usuario"
 
@@ -42,7 +41,6 @@ class Board(Base):
     usuario = relationship("Usuario", back_populates="boards")
     membros = relationship("BoardMembro", back_populates="board", cascade="all, delete-orphan")
 
-    # Um calendário tem muitos 'eventos'
     # O back_populates aponta para a propriedade 'calendario' no modelo Evento
     tarefas = relationship("Tarefa", back_populates="board", cascade="all, delete-orphan")
 
@@ -61,6 +59,7 @@ class Tarefa(Base):
     descricao = Column(Text, nullable=True)
     status = Column(String, nullable=False, index=True)  # BACKLOG, DOING, DONE
     tag = Column(String, nullable=True)  # ex: #FRONTEND, #BACKEND
+    prioridade = Column(String, nullable=True)  # baixo, médio, alto
 
     # Datas de início e fim em formato datetime
     data_inicio = Column(DateTime, nullable=True)
