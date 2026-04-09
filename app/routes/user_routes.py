@@ -5,37 +5,64 @@ from app.database import get_db
 from app import crud
 import secrets
 from app.database import redis_client
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
+import requests
 import os
 
 
 router = APIRouter(prefix="/usuarios", tags=["Usuários"])
 RESET_TOKEN_EXPIRATION_SECONDS = 600
 
-BREVO_SMTP_SERVER = os.getenv("BREVO_SMTP_SERVER", "smtp-relay.brevo.com")
-BREVO_SMTP_PORT = int(os.getenv("BREVO_SMTP_PORT", 587))
-BREVO_SMTP_USER = os.getenv("BREVO_SMTP_USER")
-BREVO_SMTP_PASS = os.getenv("BREVO_SMTP_PASS")
-BREVO_FROM_EMAIL = os.getenv("BREVO_FROM_EMAIL", BREVO_SMTP_USER)
+BREVO_API_KEY = os.getenv("BREVO_API_KEY")
+BREVO_FROM_EMAIL = os.getenv("BREVO_FROM_EMAIL", "noreply@clariatask.shop")
 BREVO_FROM_NAME = os.getenv("BREVO_FROM_NAME", "Equipe ClarIA")
 
 
 def send_reset_email(email: str, token: str):
     subject = "Redefinição de senha"
-    body = f"Olá,\n\nVocê solicitou a redefinição de senha.\n\nUse este token para redefinir sua senha: {token}\n\nSe não foi você, ignore este e-mail.\n\nEquipe Claria"
+    html_content = f"""
+    <html>
+    <body>
+        <h2>Redefinição de senha</h2>
+        <p>Olá,</p>
+        <p>Você solicitou a redefinição de senha.</p>
+        <p><strong>Use este token para redefinir sua senha:</strong> {token}</p>
+        <p>Se não foi você, ignore este e-mail.</p>
+        <br>
+        <p>Equipe ClarIA</p>
+    </body>
+    </html>
+    """
 
-    msg = MIMEMultipart()
-    msg["From"] = f"{BREVO_FROM_NAME} <{BREVO_FROM_EMAIL}>"
-    msg["To"] = email
-    msg["Subject"] = subject
-    msg.attach(MIMEText(body, "plain"))
+    payload = {
+        "sender": {
+            "name": BREVO_FROM_NAME,
+            "email": BREVO_FROM_EMAIL
+        },
+        "to": [
+            {
+                "email": email
+            }
+        ],
+        "subject": subject,
+        "htmlContent": html_content
+    }
 
-    with smtplib.SMTP(BREVO_SMTP_SERVER, BREVO_SMTP_PORT) as server:
-        server.starttls()
-        server.login(BREVO_SMTP_USER, BREVO_SMTP_PASS)
-        server.sendmail(BREVO_FROM_EMAIL, email, msg.as_string())
+    headers = {
+        "accept": "application/json",
+        "api-key": BREVO_API_KEY,
+        "content-type": "application/json"
+    }
+
+    response = requests.post(
+        "https://api.brevo.com/v3/smtp/email",
+        json=payload,
+        headers=headers
+    )
+
+    if response.status_code not in [200, 201]:
+        raise Exception(f"Brevo API error: {response.status_code} - {response.text}")
+
+    return response.json()
 
 
 @router.post("/", response_model=schemas.Usuario)
