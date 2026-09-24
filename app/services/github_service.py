@@ -1,6 +1,8 @@
 import time 
 from pathlib import Path
 
+import requests
+
 from jose import jwt
 
 from app.config import GITHUB_APP_CLIENT_ID, GITHUB_APP_PRIVATE_KEY_PATH
@@ -26,3 +28,61 @@ def gerar_github_app_jwt():
   )
   
   return token
+
+def gerar_installation_access_token(installation_id: int):
+  app_jwt = gerar_github_app_jwt()
+  
+  headers = {
+    "Authorization": f"Bearer {app_jwt}",
+    "Accept": "application/vnd.github+json",
+    "X-GitHub-Api-Version": "2022-11-28",
+  }
+  
+  response = requests.post(
+    f"https://api.github.com/app/installations/{installation_id}/access_tokens",
+    headers=headers,
+  )
+  
+  response.raise_for_status()
+  
+  dados = response.json()
+  
+  return dados["token"]
+
+def listar_repositorios(installation_id: int):
+  token = gerar_installation_access_token(installation_id)
+  
+  headers = {
+    "Authorization": f"Bearer {token}",
+    "Accept": "application/vnd.github+json",
+    "X-GitHub-Api-Version": "2022-11-28",
+  }
+  
+  response = requests.get(
+    "https://api.github.com/installation/repositories",
+    headers=headers,
+  )
+  
+  response.raise_for_status()
+  
+  dados = response.json()
+  
+  return dados["repositories"]
+
+def listar_conteudo_repositorio(installation_id: int, owner: str, repo: str, path: str = ""):
+  token = gerar_installation_access_token(installation_id)
+  
+  headers = {
+    "Authorization": f"Bearer {token}",
+    "Accept": "application/vnd.github+json",
+    "X-GitHub-Api-Version": "2022-11-28",
+  }
+  
+  response = requests.get(
+    f"https://api.github.com/repos/{owner}/{repo}/contents/{path}",
+    headers=headers,
+  )
+  
+  response.raise_for_status()
+
+  return response.json()
