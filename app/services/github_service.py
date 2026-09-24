@@ -70,7 +70,7 @@ def listar_repositorios(installation_id: int):
   
   return dados["repositories"]
 
-def listar_conteudo_repositorio(installation_id: int, owner: str, repo: str, path: str = ""):
+def listar_conteudo_repositorio(installation_id: int, owner: str, repo: str, path: str = "", branch: str | None = None,):
   token = gerar_installation_access_token(installation_id)
   
   headers = {
@@ -79,16 +79,22 @@ def listar_conteudo_repositorio(installation_id: int, owner: str, repo: str, pat
     "X-GitHub-Api-Version": "2022-11-28",
   }
   
+  params = {}
+
+  if branch:
+      params["ref"] = branch
+  
   response = requests.get(
     f"https://api.github.com/repos/{owner}/{repo}/contents/{path}",
     headers=headers,
+    params=params,
   )
   
   response.raise_for_status()
 
   return response.json()
 
-def obter_conteudo_arquivo(installation_id: int, owner: str, repo: str, path: str):
+def obter_conteudo_arquivo(installation_id: int, owner: str, repo: str, path: str, branch: str | None = None,):
   token = gerar_installation_access_token(installation_id)
   
   headers = {
@@ -97,9 +103,15 @@ def obter_conteudo_arquivo(installation_id: int, owner: str, repo: str, path: st
     "X-GitHub-Api-Version": "2022-11-28",
   }
   
+  params = {}
+
+  if branch:
+    params["ref"] = branch
+  
   response = requests.get(
     f"https://api.github.com/repos/{owner}/{repo}/contents/{path}",
     headers=headers,
+    params={"ref": branch}
   )
   
   response.raise_for_status()
