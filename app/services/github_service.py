@@ -123,5 +123,27 @@ def obter_conteudo_arquivo(installation_id: int, owner: str, repo: str, path: st
   conteudo = base64.b64decode(conteudo_base64).decode("utf-8")
   
   return conteudo
+
+def listar_arvore_repositorio(installation_id: int, owner: str, repo: str, branch: str = "main",
+):
+  token = gerar_installation_access_token(installation_id)
+
+  headers = {
+    "Authorization": f"Bearer {token}",
+    "Accept": "application/vnd.github+json",
+    "X-GitHub-Api-Version": "2022-11-28",
+  }
+
+  response = requests.get(
+    f"https://api.github.com/repos/{owner}/{repo}/git/trees/{branch}",
+    headers=headers,
+    params={"recursive": "1"},
+  )
+
+  response.raise_for_status()
+
+  dados = response.json()
+
+  return dados["tree"]
   
   
