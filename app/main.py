@@ -4,6 +4,7 @@ from .routes import  user_routes
 from app.routes import task_routes
 from app.routes import ml_routes
 from app.routes import board_routes
+from app.routes import github_routes
 from fastapi.middleware.cors import CORSMiddleware
 from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 
@@ -34,6 +35,7 @@ app.include_router(user_routes.router)
 app.include_router(task_routes.router)
 app.include_router(ml_routes.router)
 app.include_router(board_routes.router)  # Inclui as rotas de board
+app.include_router(github_routes.router)
 
 # Define um endpoint (ou "rota") para a raiz da **URL
 @app.get("/")
