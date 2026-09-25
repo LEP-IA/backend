@@ -8,6 +8,42 @@ from jose import jwt
 
 from app.config import GITHUB_APP_CLIENT_ID, GITHUB_APP_PRIVATE_KEY_PATH
 
+PASTAS_IGNORADAS = {
+    ".git",
+    ".idea",
+    ".vscode",
+    ".venv",
+    "venv",
+    "__pycache__",
+    "node_modules",
+    "dist",
+    "build",
+    "coverage",
+    "secrets",
+}
+
+ARQUIVOS_IGNORADOS = {
+    ".env",
+    ".env.local",
+    ".env.development",
+    ".env.production",
+}
+
+EXTENSOES_IGNORADAS = {
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".gif",
+    ".ico",
+    ".pdf",
+    ".zip",
+    ".tar",
+    ".gz",
+    ".exe",
+    ".bin",
+    ".pyc",
+}
+
 def gerar_github_app_jwt():
   private_key_path = Path(GITHUB_APP_PRIVATE_KEY_PATH)
   
@@ -146,4 +182,63 @@ def listar_arvore_repositorio(installation_id: int, owner: str, repo: str, branc
 
   return dados["tree"]
   
-  
+
+def filtrar_arquivos_relevantes(itens):
+  arquivos = []
+
+  for item in itens:
+    if item["type"] != "blob":
+      continue
+
+    path = item["path"]
+    caminho = Path(path)
+
+    if any(parte in PASTAS_IGNORADAS for parte in caminho.parts):
+      continue
+
+    if caminho.name in ARQUIVOS_IGNORADOS:
+      continue
+
+    if caminho.suffix.lower() in EXTENSOES_IGNORADAS:
+      continue
+
+    arquivos.append(path)
+
+  return arquivos
+
+def carregar_arquivos_repositorio(
+    installation_id: int,
+    owner: str,
+    repo: str,
+    branch: str | None = None,
+):
+    arvore = listar_arvore_repositorio(
+        installation_id,
+        owner,
+        repo,
+        branch,
+    )
+
+    caminhos = filtrar_arquivos_relevantes(arvore)
+
+    arquivos = []
+
+    for path in caminhos:
+        try:
+            conteudo = obter_conteudo_arquivo(
+                installation_id,
+                owner,
+                repo,
+                path,
+                branch,
+            )
+
+            arquivos.append({
+                "path": path,
+                "content": conteudo,
+            })
+
+        except UnicodeDecodeError:
+            continue
+
+    return arquivos
