@@ -20,6 +20,19 @@ from app.models import Usuario, Board, Tarefa, ChatIA
 # access to the values within the .ini file in use.
 config = context.config
 
+alembic_database_url = os.getenv("ALEMBIC_DATABASE_URL")
+
+if not alembic_database_url:
+    raise RuntimeError(
+        "ALEMBIC_DATABASE_URL não configurada. "
+        "Defina explicitamente o banco onde as migrations serão executadas."
+    )
+
+config.set_main_option(
+    "sqlalchemy.url",
+    alembic_database_url.replace("%", "%%"),
+)
+
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
 if config.config_file_name is not None:
