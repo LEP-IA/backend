@@ -21,6 +21,10 @@ RUN pip install --upgrade pip && pip install -r requirements.txt
 # Copia o restante do código
 COPY app /app/app
 
+# Copia os arquivos do Alembic
+COPY migration /app/migration
+COPY alembic.ini /app/alembic.ini
+
 # Expõe a porta do uvicorn
 EXPOSE 8000
 
