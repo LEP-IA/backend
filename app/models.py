@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, ForeignKey, DateTime
+from sqlalchemy import Column, Integer, BigInteger, String, Text, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
 from .database import Base
 
@@ -14,6 +14,8 @@ class Usuario(Base):
     chats = relationship("ChatIA", back_populates="usuario")
     boards = relationship("Board", back_populates="usuario")
     membro_boards = relationship("BoardMembro", back_populates="usuario", cascade="all, delete-orphan")
+    
+    github_installations_criadas = relationship("GitHubInstallation", back_populates="created_by_user")
 
 class ChatIA(Base):
     __tablename__ = "chatia"
@@ -80,3 +82,17 @@ class BoardMembro(Base):
 
     board = relationship("Board", back_populates="membros")
     usuario = relationship("Usuario", back_populates="membro_boards")
+
+class GitHubInstallation(Base):
+    __tablename__ = "github_installation"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    installation_id = Column(BigInteger, unique=True, nullable=False, index=True)
+    account_id = Column(BigInteger, nullable=False, index=True)
+    account_login = Column(String, nullable=False)
+    account_type = Column(String, nullable=False)
+    repository_selection = Column(String, nullable=True)
+    created_by_email = Column(String, ForeignKey("usuario.email", ondelete="SET NULL"), nullable=True)
+    created_by_user = relationship("Usuario", back_populates="github_installations_criadas")
+    
+    
