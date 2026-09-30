@@ -3,7 +3,6 @@ venv
 __pycache__
 .venv
 .idea
-.gitignore
 .codex
 secrets/
 *.pyc
