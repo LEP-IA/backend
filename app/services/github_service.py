@@ -242,3 +242,22 @@ def carregar_arquivos_repositorio(
             continue
 
     return arquivos
+
+
+def obter_dados_instalacao(installation_id: int):
+    app_jwt = gerar_github_app_jwt()
+
+    headers = {
+        "Authorization": f"Bearer {app_jwt}",
+        "Accept": "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+    }
+
+    response = requests.get(
+        f"https://api.github.com/app/installations/{installation_id}",
+        headers=headers,
+    )
+
+    response.raise_for_status()
+
+    return response.json()
