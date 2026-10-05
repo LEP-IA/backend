@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from app import models, security
 from secrets import token_urlsafe
 from app.database import redis_client
+from app.services import github_service
 
 from urllib.parse import urlencode
 from app.config import GITHUB_APP_SLUG
@@ -45,12 +46,27 @@ def github_setup(installation_id: int, state: str, setup_action: str | None = No
     if not email:
         raise HTTPException(status_code=400, detail="State inválido ou expirado")
     
+    dados_instalacao = github_service.obter_dados_instalacao(installation_id)
+    
+    account = dados_instalacao["account"]
+    
+    account_id = account["id"]
+    account_login = account["login"]
+    account_type = account["type"]
+    
+    repository_selection = dados_instalacao["repository_selection"]
+
     
     return {
         "installation_id": installation_id,
         "setup_action": setup_action,
         "email": email,
+        "account_id": account_id,
+        "account_login": account_login,
+        "account_type": account_type,
+        "repository_selection": repository_selection,
     }
-  
+    
+    
   
 
