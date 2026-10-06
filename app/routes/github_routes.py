@@ -58,12 +58,12 @@ def github_setup(
 
     try:
         dados_instalacao = github_service.obter_dados_instalacao(installation_id)
-        
+
     except requests.HTTPError:
         raise HTTPException(
             status_code=400, detail="Instalação do GitHub inválida ou não acessível"
         )
-        
+
     except requests.RequestException:
         raise HTTPException(
             status_code=502, detail="Não foi possível comunicar com o GitHub"
@@ -78,7 +78,7 @@ def github_setup(
     repository_selection = dados_instalacao["repository_selection"]
 
     try:
-    
+
         github_installation = (
             db.query(models.GitHubInstallation)
             .filter(models.GitHubInstallation.installation_id == installation_id)
@@ -108,13 +108,12 @@ def github_setup(
 
         db.commit()
         db.refresh(github_installation)
-    
+
     except SQLAlchemyError:
         db.rollback()
 
         raise HTTPException(
-            status_code=500,
-            detail="Erro ao salvar a instalação do GitHub"
+            status_code=500, detail="Erro ao salvar a instalação do GitHub"
         )
 
     redis_client.delete(redis_key)
@@ -124,4 +123,61 @@ def github_setup(
         "installation_id": github_installation.installation_id,
         "account_login": github_installation.account_login,
         "account_type": github_installation.account_type,
+    }
+
+
+@router.get("/installations/{installation_id}/repositories")
+def listar_repositorios_instalacao(
+    installation_id: int,
+    current_user: models.Usuario = Depends(security.get_current_user),
+    db: Session = Depends(get_db),
+):
+
+    github_installation = (
+        db.query(models.GitHubInstallation)
+        .filter(models.GitHubInstallation.installation_id == installation_id)
+        .first()
+    )
+
+    if not github_installation:
+        raise HTTPException(
+            status_code=404, detail="Instalação do GitHub não encontrada"
+        )
+
+    if github_installation.created_by_email != current_user.email:
+        raise HTTPException(
+            status_code=403,
+            detail="Você não tem permissão para gerenciar esta instalação",
+        )
+
+    try:
+        repositorios = github_service.listar_repositorios(installation_id)
+
+    except requests.HTTPError:
+        raise HTTPException(
+            status_code=400,
+            detail="Não foi possível acessar os repositórios desta instalação",
+        )
+
+    except requests.RequestException:
+        raise HTTPException(
+            status_code=502, detail="Não foi possível comunicar com o GitHub"
+        )
+
+    repositorios_formatados = []
+
+    for repo in repositorios:
+        repositorios_formatados.append(
+            {
+                "id": repo["id"],
+                "name": repo["name"],
+                "full_name": repo["full_name"],
+                "private": repo["private"],
+                "default_branch": repo["default_branch"],
+            }
+        )
+
+    return {
+        "installation_id": installation_id,
+        "repositories": repositorios_formatados,
     }
