@@ -175,3 +175,7 @@ class PasswordResetConfirm(BaseModel):
 class SetDonoRequest(BaseModel):
     board_id: int
     usuario_email: EmailStr
+
+class BoardRepositoryCreate(BaseModel):
+    installation_id: int
+    repository_id: int
