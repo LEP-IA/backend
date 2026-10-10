@@ -1,6 +1,8 @@
 from datetime import datetime
-from typing import Optional, List
-from pydantic import BaseModel, EmailStr, Field
+from typing import Annotated, Optional, List
+from pydantic import BaseModel, EmailStr, Field, StringConstraints
+
+TaskStatus = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
 
 # Formulário para CRIAR um usuário 
 class UsuarioCreate(BaseModel):
@@ -36,7 +38,7 @@ class UserOut(BaseModel):
 class TaskBase(BaseModel):
     title: str
     description: Optional[str] = None
-    status: str  # BACKLOG, DOING, DONE
+    status: TaskStatus
     tag: Optional[str] = None
     startDate: Optional[datetime] = None
     endDate: Optional[datetime] = None
@@ -47,7 +49,7 @@ class TaskBase(BaseModel):
 class TaskCreate(BaseModel):
     title: str
     description: str
-    status: str = Field(..., pattern="^(BACKLOG|DOING|DONE)$")
+    status: TaskStatus
     tag: str
     boardId: int
     startDate: Optional[datetime] = None
@@ -60,7 +62,7 @@ class TaskCreate(BaseModel):
 class TaskUpdate(BaseModel):
     title: str
     description: str
-    status: str = Field(..., pattern="^(BACKLOG|DOING|DONE)$")
+    status: TaskStatus
     tag: str
     startDate: Optional[datetime] = None
     endDate: Optional[datetime] = None
