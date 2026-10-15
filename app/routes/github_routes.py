@@ -438,3 +438,28 @@ def desassociar_repositorio_board(
         )
 
     return {"message": "Repositório removido do Board com sucesso"}
+
+
+@router.get("/installations")
+def listar_instalacoes_usuario(
+    current_user: models.Usuario = Depends(security.get_current_user),
+    db: Session = Depends(get_db),
+):
+
+    installations = (
+        db.query(models.GitHubInstallation)
+        .filter(models.GitHubInstallation.created_by_email == current_user.email)
+        .all()
+    )
+
+    return {
+        "installations": [
+            {
+                "installation_id": installation.installation_id,
+                "account_login": installation.account_login,
+                "account_type": installation.account_type,
+                "repository_selection": installation.repository_selection,
+            }
+            for installation in installations
+        ]
+    }
