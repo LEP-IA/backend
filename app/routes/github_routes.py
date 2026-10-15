@@ -1,14 +1,15 @@
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import RedirectResponse
+
 from app import models, security, schemas
 from secrets import token_urlsafe
-from app.database import redis_client
 from app.services import github_service
 
 from sqlalchemy.orm import Session
 from app.database import get_db, redis_client
 
 from urllib.parse import urlencode
-from app.config import GITHUB_APP_SLUG
+from app.config import GITHUB_APP_SLUG, FRONTEND_URL
 
 import requests
 from sqlalchemy.exc import SQLAlchemyError
@@ -117,13 +118,20 @@ def github_setup(
         )
 
     redis_client.delete(redis_key)
-
-    return {
-        "message": "GitHub conectado com sucesso",
-        "installation_id": github_installation.installation_id,
-        "account_login": github_installation.account_login,
-        "account_type": github_installation.account_type,
-    }
+    
+    params = urlencode(
+        {
+            "github": "connected",
+            "installation_id": github_installation.installation_id,
+        }
+    )
+    
+    redirect_url = f"{FRONTEND_URL}?{params}"
+    
+    return RedirectResponse(
+        url=redirect_url,
+        status_code=302,
+    )
 
 
 @router.get("/installations/{installation_id}/repositories")
