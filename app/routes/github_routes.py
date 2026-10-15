@@ -373,3 +373,68 @@ def listar_repositorios_board(
             for repository in repositories
         ],
     }
+
+
+@router.delete("/boards/{board_id}/repositories/{repository_id}")
+def desassociar_repositorio_board(
+    board_id: int,
+    repository_id: int,
+    current_user: models.Usuario = Depends(security.get_current_user),
+    db: Session = Depends(get_db),
+):
+
+    board = db.query(models.Board).filter(models.Board.id_board == board_id).first()
+
+    if not board:
+        raise HTTPException(
+            status_code=404,
+            detail="Board não encontrado",
+        )
+
+    is_owner_user = board.usuario_email == current_user.email
+
+    is_owner_member = (
+        db.query(models.BoardMembro)
+        .filter(
+            models.BoardMembro.board_id == board_id,
+            models.BoardMembro.usuario_email == current_user.email,
+            models.BoardMembro.tag == "dono",
+        )
+        .first()
+        is not None
+    )
+
+    if not (is_owner_user or is_owner_member):
+        raise HTTPException(
+            status_code=403,
+            detail="Apenas donos podem remover repositórios deste Board",
+        )
+
+    board_repository = (
+        db.query(models.BoardRepository)
+        .filter(
+            models.BoardRepository.board_id == board_id,
+            models.BoardRepository.repository_id == repository_id,
+        )
+        .first()
+    )
+
+    if not board_repository:
+        raise HTTPException(
+            status_code=404,
+            detail="Repositório não está associado a este Board",
+        )
+
+    try:
+        db.delete(board_repository)
+        db.commit()
+
+    except SQLAlchemyError:
+        db.rollback()
+
+        raise HTTPException(
+            status_code=500,
+            detail="Erro ao remover repositório do Board",
+        )
+
+    return {"message": "Repositório removido do Board com sucesso"}
