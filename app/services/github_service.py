@@ -210,7 +210,7 @@ def carregar_arquivos_repositorio(
     installation_id: int,
     owner: str,
     repo: str,
-    branch: str | None = None,
+    branch: str,
 ):
     arvore = listar_arvore_repositorio(
         installation_id,
