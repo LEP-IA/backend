@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status # Importe 'status'
+from fastapi import APIRouter, Depends, HTTPException, status  # Importe 'status'
 from sqlalchemy.orm import Session
 from app import models, schemas, security
 from app.database import get_db
@@ -7,7 +7,6 @@ import secrets
 from app.database import redis_client
 import requests
 import os
-
 
 router = APIRouter(prefix="/usuarios", tags=["Usuários"])
 RESET_TOKEN_EXPIRATION_SECONDS = 600
@@ -34,29 +33,20 @@ def send_reset_email(email: str, token: str):
     """
 
     payload = {
-        "sender": {
-            "name": BREVO_FROM_NAME,
-            "email": BREVO_FROM_EMAIL
-        },
-        "to": [
-            {
-                "email": email
-            }
-        ],
+        "sender": {"name": BREVO_FROM_NAME, "email": BREVO_FROM_EMAIL},
+        "to": [{"email": email}],
         "subject": subject,
-        "htmlContent": html_content
+        "htmlContent": html_content,
     }
 
     headers = {
         "accept": "application/json",
         "api-key": BREVO_API_KEY,
-        "content-type": "application/json"
+        "content-type": "application/json",
     }
 
     response = requests.post(
-        "https://api.brevo.com/v3/smtp/email",
-        json=payload,
-        headers=headers
+        "https://api.brevo.com/v3/smtp/email", json=payload, headers=headers
     )
 
     if response.status_code not in [200, 201]:
@@ -71,24 +61,25 @@ def criar_usuario(usuario: schemas.UsuarioCreate, db: Session = Depends(get_db))
     Cria um novo usuário com senha criptografada.
     """
     # Verifica se o e-mail já existe
-    usuario_existente = db.query(models.Usuario).filter(models.Usuario.email == usuario.email).first()
+    usuario_existente = (
+        db.query(models.Usuario).filter(models.Usuario.email == usuario.email).first()
+    )
     if usuario_existente:
         raise HTTPException(status_code=400, detail="E-mail já cadastrado.")
 
     senha_hash = security.gerar_hash(usuario.senha)
     novo_usuario = models.Usuario(
-        email=usuario.email,
-        nome=usuario.nome,
-        senha_hash=senha_hash
+        email=usuario.email, nome=usuario.nome, senha_hash=senha_hash
     )
     db.add(novo_usuario)
     db.commit()
     db.refresh(novo_usuario)
     return novo_usuario
 
+
 @router.post("/signup", status_code=status.HTTP_201_CREATED)
 def signup(user: schemas.SignupRequest, db: Session = Depends(get_db)):
-    """Cadastro de usuário """
+    """Cadastro de usuário"""
     name = user.name
     email = user.email
     password = user.password
@@ -114,9 +105,10 @@ def signup(user: schemas.SignupRequest, db: Session = Depends(get_db)):
     db.refresh(novo_usuario)
     return {"message": "Usuário criado com sucesso"}
 
+
 @router.post("/login", response_model=schemas.LoginResponse)
 def login(data: schemas.LoginRequest, db: Session = Depends(get_db)):
-    """Autenticação no padrão """
+    """Autenticação no padrão"""
     email = data.email
     password = data.password
 
@@ -138,6 +130,7 @@ def login(data: schemas.LoginRequest, db: Session = Depends(get_db)):
 
     return schemas.LoginResponse(token=access_token, user=user_out)
 
+
 @router.post("/logout")
 def logout(
     _body: schemas.LogoutRequest,
@@ -149,8 +142,7 @@ def logout(
 
 @router.get("/", response_model=schemas.UserListResponse)
 def listar_usuarios(
-        db: Session = Depends(get_db),
-        _current_user=Depends(security.get_current_user)
+    db: Session = Depends(get_db), _current_user=Depends(security.get_current_user)
 ):
     """
     Retorna a lista de todos os usuários no formato {"users": [...]}
@@ -162,9 +154,14 @@ def listar_usuarios(
 
     return schemas.UserListResponse(users=usuarios_formatados)
 
+
 @router.post("/reset-password-request")
-def reset_password_request(data: schemas.PasswordResetRequest, db: Session = Depends(get_db)):
-    usuario = db.query(models.Usuario).filter(models.Usuario.email == data.email).first()
+def reset_password_request(
+    data: schemas.PasswordResetRequest, db: Session = Depends(get_db)
+):
+    usuario = (
+        db.query(models.Usuario).filter(models.Usuario.email == data.email).first()
+    )
     if not usuario:
         raise HTTPException(status_code=404, detail="Usuário não encontrado.")
     token = secrets.token_urlsafe(48)
@@ -175,8 +172,11 @@ def reset_password_request(data: schemas.PasswordResetRequest, db: Session = Dep
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erro ao enviar e-mail: {str(e)}")
 
+
 @router.post("/reset-password-confirm")
-def reset_password_confirm(data: schemas.PasswordResetConfirm, db: Session = Depends(get_db)):
+def reset_password_confirm(
+    data: schemas.PasswordResetConfirm, db: Session = Depends(get_db)
+):
     email = redis_client.get(f"reset:{data.token}")
     if not email:
         raise HTTPException(status_code=400, detail="Token inválido ou expirado.")
@@ -189,14 +189,21 @@ def reset_password_confirm(data: schemas.PasswordResetConfirm, db: Session = Dep
     redis_client.delete(f"reset:{data.token}")
     return {"message": "Senha redefinida com sucesso."}
 
+
 @router.post("/board/set-dono")
 def set_dono_board(data: schemas.SetDonoRequest, db: Session = Depends(get_db)):
-    membro = db.query(models.BoardMembro).filter(
-        models.BoardMembro.board_id == data.board_id,
-        models.BoardMembro.usuario_email == data.usuario_email
-    ).first()
+    membro = (
+        db.query(models.BoardMembro)
+        .filter(
+            models.BoardMembro.board_id == data.board_id,
+            models.BoardMembro.usuario_email == data.usuario_email,
+        )
+        .first()
+    )
     if not membro:
         raise HTTPException(status_code=404, detail="Usuário não é membro deste board.")
     membro.tag = "dono"
     db.commit()
-    return {"message": f"Usuário {data.usuario_email} agora é dono do board {data.board_id}."}
+    return {
+        "message": f"Usuário {data.usuario_email} agora é dono do board {data.board_id}."
+    }

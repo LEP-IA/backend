@@ -61,7 +61,7 @@ def list_tasks(
     db: Session = Depends(get_db),
     _usuario_logado=Depends(get_current_user),
 ):
-    """Lista tarefas """
+    """Lista tarefas"""
     tasks_db = crud.list_tasks(db)
     tasks_out = [crud.build_task_out(t) for t in tasks_db]
     return schemas.TaskListResponse(tasks=tasks_out)
@@ -71,17 +71,16 @@ def list_tasks(
 def list_tasks_by_board(
     board_id: int,
     db: Session = Depends(get_db),
-    _usuario_logado=Depends(get_current_user), # Removi o ': models.Usuario'
+    _usuario_logado=Depends(get_current_user),  # Removi o ': models.Usuario'
 ):
     board_existente = crud.get_board(db, board_id)
 
     if not board_existente:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Board não encontrado."
+            status_code=status.HTTP_404_NOT_FOUND, detail="Board não encontrado."
         )
 
     tasks_db = crud.list_tasks_by_board(db, board_id=board_id)
     tasks_out = [crud.build_task_out(t) for t in tasks_db]
-    
+
     return schemas.TaskListResponse(tasks=tasks_out)
