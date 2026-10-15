@@ -318,3 +318,58 @@ def associar_repositorio_board(
             "private": board_repository.private,
         },
     }
+
+
+@router.get("/boards/{board_id}/repositories")
+def listar_repositorios_board(
+    board_id: int,
+    current_user: models.Usuario = Depends(security.get_current_user),
+    db: Session = Depends(get_db),
+):
+
+    board = db.query(models.Board).filter(models.Board.id_board == board_id).first()
+
+    if not board:
+        raise HTTPException(
+            status_code=404,
+            detail="Board não encontrado",
+        )
+
+    is_owner_user = board.usuario_email == current_user.email
+
+    is_member = (
+        db.query(models.BoardMembro)
+        .filter(
+            models.BoardMembro.board_id == board_id,
+            models.BoardMembro.usuario_email == current_user.email,
+        )
+        .first()
+        is not None
+    )
+
+    if not (is_owner_user or is_member):
+        raise HTTPException(
+            status_code=403,
+            detail="Você não tem acesso a este Board",
+        )
+
+    repositories = (
+        db.query(models.BoardRepository)
+        .filter(models.BoardRepository.board_id == board_id)
+        .all()
+    )
+
+    return {
+        "board_id": board_id,
+        "repositories": [
+            {
+                "id": repository.id,
+                "repository_id": repository.repository_id,
+                "name": repository.repository_name,
+                "full_name": repository.repository_full_name,
+                "default_branch": repository.default_branch,
+                "private": repository.private,
+            }
+            for repository in repositories
+        ],
+    }
