@@ -181,3 +181,10 @@ class SetDonoRequest(BaseModel):
 class BoardRepositoryCreate(BaseModel):
     installation_id: int
     repository_id: int
+
+class BoardRepositoryBranchUpdate(BaseModel):
+    branch: str = Field(
+        ...,
+        min_length=1,
+        max_length=255,
+    )

@@ -50,7 +50,7 @@ EXTENSOES_IGNORADAS = {
 
 
 def gerar_github_app_jwt():
-    
+
     private_key = obter_github_private_key()
 
     now = int(time.time())
@@ -102,6 +102,49 @@ def listar_repositorios(installation_id: int):
     dados = response.json()
 
     return dados["repositories"]
+
+
+def listar_branches_repositorio(
+    installation_id: int,
+    owner: str,
+    repo: str,
+):
+    token = gerar_installation_access_token(
+        installation_id,
+    )
+
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Accept": "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+    }
+
+    branches = []
+
+    page = 1
+
+    while True:
+        response = requests.get(
+            f"https://api.github.com/repos/{owner}/{repo}/branches",
+            headers=headers,
+            params={
+                "per_page": 100,
+                "page": page,
+            },
+        )
+
+        response.raise_for_status()
+
+        current_page = response.json()
+
+        branches.extend(current_page)
+
+        if len(current_page) < 100:
+            break
+
+        page += 1
+
+    return branches
 
 
 def listar_conteudo_repositorio(

@@ -383,6 +383,230 @@ def listar_repositorios_board(
     }
 
 
+@router.get("/boards/{board_id}/repositories/{repository_id}/branches")
+def listar_branches_repositorio_board(
+    board_id: int,
+    repository_id: int,
+    current_user: models.Usuario = Depends(security.get_current_user),
+    db: Session = Depends(get_db),
+):
+    board = db.query(models.Board).filter(models.Board.id_board == board_id).first()
+
+    if not board:
+        raise HTTPException(
+            status_code=404,
+            detail="Board não encontrado",
+        )
+
+    is_owner_user = board.usuario_email == current_user.email
+
+    is_owner_member = (
+        db.query(models.BoardMembro)
+        .filter(
+            models.BoardMembro.board_id == board_id,
+            models.BoardMembro.usuario_email == current_user.email,
+            models.BoardMembro.tag == "dono",
+        )
+        .first()
+        is not None
+    )
+
+    if not (is_owner_user or is_owner_member):
+        raise HTTPException(
+            status_code=403,
+            detail=(
+                "Apenas donos podem "
+                "configurar a branch "
+                "dos repositórios deste Board"
+            ),
+        )
+
+    board_repository = (
+        db.query(models.BoardRepository)
+        .filter(
+            models.BoardRepository.board_id == board_id,
+            models.BoardRepository.repository_id == repository_id,
+        )
+        .first()
+    )
+
+    if not board_repository:
+        raise HTTPException(
+            status_code=404,
+            detail=("Repositório não está " "associado a este Board"),
+        )
+
+    github_installation = board_repository.github_installation
+
+    installation_id = github_installation.installation_id
+
+    try:
+        owner, repo = board_repository.repository_full_name.split("/", 1)
+    except ValueError:
+        raise HTTPException(
+            status_code=500,
+            detail=("Nome do repositório " "associado é inválido"),
+        )
+
+    try:
+        branches = github_service.listar_branches_repositorio(
+            installation_id=installation_id,
+            owner=owner,
+            repo=repo,
+        )
+
+    except requests.HTTPError:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Não foi possível acessar " "as branches do repositório " "no GitHub"
+            ),
+        )
+
+    except requests.RequestException:
+        raise HTTPException(
+            status_code=502,
+            detail=("Não foi possível comunicar " "com o GitHub"),
+        )
+
+    return {
+        "board_id": board_id,
+        "repository_id": (board_repository.repository_id),
+        "current_branch": (board_repository.default_branch),
+        "branches": [
+            {
+                "name": branch["name"],
+                "protected": branch.get(
+                    "protected",
+                    False,
+                ),
+            }
+            for branch in branches
+        ],
+    }
+
+
+@router.patch("/boards/{board_id}/repositories/{repository_id}/branch")
+def alterar_branch_repositorio_board(
+    board_id: int,
+    repository_id: int,
+    dados: schemas.BoardRepositoryBranchUpdate,
+    current_user: models.Usuario = Depends(security.get_current_user),
+    db: Session = Depends(get_db),
+):
+    board = db.query(models.Board).filter(models.Board.id_board == board_id).first()
+
+    if not board:
+        raise HTTPException(
+            status_code=404,
+            detail="Board não encontrado",
+        )
+
+    is_owner_user = board.usuario_email == current_user.email
+
+    is_owner_member = (
+        db.query(models.BoardMembro)
+        .filter(
+            models.BoardMembro.board_id == board_id,
+            models.BoardMembro.usuario_email == current_user.email,
+            models.BoardMembro.tag == "dono",
+        )
+        .first()
+        is not None
+    )
+
+    if not (is_owner_user or is_owner_member):
+        raise HTTPException(
+            status_code=403,
+            detail=(
+                "Apenas donos podem " "alterar a branch dos " "repositórios deste Board"
+            ),
+        )
+
+    board_repository = (
+        db.query(models.BoardRepository)
+        .filter(
+            models.BoardRepository.board_id == board_id,
+            models.BoardRepository.repository_id == repository_id,
+        )
+        .first()
+    )
+
+    if not board_repository:
+        raise HTTPException(
+            status_code=404,
+            detail=("Repositório não está " "associado a este Board"),
+        )
+
+    github_installation = board_repository.github_installation
+
+    installation_id = github_installation.installation_id
+
+    try:
+        owner, repo = board_repository.repository_full_name.split("/", 1)
+    except ValueError:
+        raise HTTPException(
+            status_code=500,
+            detail=("Nome do repositório " "associado é inválido"),
+        )
+
+    try:
+        branches = github_service.listar_branches_repositorio(
+            installation_id=installation_id,
+            owner=owner,
+            repo=repo,
+        )
+
+    except requests.HTTPError:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Não foi possível acessar " "as branches do repositório " "no GitHub"
+            ),
+        )
+
+    except requests.RequestException:
+        raise HTTPException(
+            status_code=502,
+            detail=("Não foi possível comunicar " "com o GitHub"),
+        )
+
+    branch_exists = any(branch["name"] == dados.branch for branch in branches)
+
+    if not branch_exists:
+        raise HTTPException(
+            status_code=404,
+            detail=("Branch não encontrada " "neste repositório"),
+        )
+
+    board_repository.default_branch = dados.branch
+
+    try:
+        db.commit()
+
+        db.refresh(board_repository)
+
+    except SQLAlchemyError:
+        db.rollback()
+
+        raise HTTPException(
+            status_code=500,
+            detail=("Erro ao alterar a branch " "do repositório"),
+        )
+
+    return {
+        "message": ("Branch do repositório " "alterada com sucesso"),
+        "repository": {
+            "id": board_repository.id,
+            "repository_id": (board_repository.repository_id),
+            "name": (board_repository.repository_name),
+            "full_name": (board_repository.repository_full_name),
+            "default_branch": (board_repository.default_branch),
+            "private": (board_repository.private),
+        },
+    }
+
+
 @router.delete("/boards/{board_id}/repositories/{repository_id}")
 def desassociar_repositorio_board(
     board_id: int,
