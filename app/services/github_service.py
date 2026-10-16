@@ -1,4 +1,4 @@
-import time 
+import time
 from pathlib import Path
 
 import requests
@@ -6,7 +6,11 @@ import base64
 
 from jose import jwt
 
-from app.config import GITHUB_APP_CLIENT_ID, GITHUB_APP_PRIVATE_KEY_PATH
+from app.config import (
+    GITHUB_APP_CLIENT_ID,
+    GITHUB_APP_PRIVATE_KEY,
+    GITHUB_APP_PRIVATE_KEY_PATH,
+)
 
 PASTAS_IGNORADAS = {
     ".git",
@@ -44,167 +48,180 @@ EXTENSOES_IGNORADAS = {
     ".pyc",
 }
 
+
 def gerar_github_app_jwt():
-  private_key_path = Path(GITHUB_APP_PRIVATE_KEY_PATH)
-  
-  with open(private_key_path, "r") as private_key_file:
-    private_key = private_key_file.read()
-  
-  now = int(time.time())
-  
-  payload = {
-    "iat": now - 60,
-    "exp": now + (10 * 60),
-    "iss": GITHUB_APP_CLIENT_ID
-  }
-  
-  token = jwt.encode(
-    payload,
-    private_key,
-    algorithm="RS256"
-  )
-  
-  return token
+    
+    private_key = obter_github_private_key()
+
+    now = int(time.time())
+
+    payload = {"iat": now - 60, "exp": now + (10 * 60), "iss": GITHUB_APP_CLIENT_ID}
+
+    token = jwt.encode(payload, private_key, algorithm="RS256")
+
+    return token
+
 
 def gerar_installation_access_token(installation_id: int):
-  app_jwt = gerar_github_app_jwt()
-  
-  headers = {
-    "Authorization": f"Bearer {app_jwt}",
-    "Accept": "application/vnd.github+json",
-    "X-GitHub-Api-Version": "2022-11-28",
-  }
-  
-  response = requests.post(
-    f"https://api.github.com/app/installations/{installation_id}/access_tokens",
-    headers=headers,
-  )
-  
-  response.raise_for_status()
-  
-  dados = response.json()
-  
-  return dados["token"]
+    app_jwt = gerar_github_app_jwt()
+
+    headers = {
+        "Authorization": f"Bearer {app_jwt}",
+        "Accept": "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+    }
+
+    response = requests.post(
+        f"https://api.github.com/app/installations/{installation_id}/access_tokens",
+        headers=headers,
+    )
+
+    response.raise_for_status()
+
+    dados = response.json()
+
+    return dados["token"]
+
 
 def listar_repositorios(installation_id: int):
-  token = gerar_installation_access_token(installation_id)
-  
-  headers = {
-    "Authorization": f"Bearer {token}",
-    "Accept": "application/vnd.github+json",
-    "X-GitHub-Api-Version": "2022-11-28",
-  }
-  
-  response = requests.get(
-    "https://api.github.com/installation/repositories",
-    headers=headers,
-  )
-  
-  response.raise_for_status()
-  
-  dados = response.json()
-  
-  return dados["repositories"]
+    token = gerar_installation_access_token(installation_id)
 
-def listar_conteudo_repositorio(installation_id: int, owner: str, repo: str, path: str = "", branch: str | None = None,):
-  token = gerar_installation_access_token(installation_id)
-  
-  headers = {
-    "Authorization": f"Bearer {token}",
-    "Accept": "application/vnd.github+json",
-    "X-GitHub-Api-Version": "2022-11-28",
-  }
-  
-  params = {}
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Accept": "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+    }
 
-  if branch:
-      params["ref"] = branch
-  
-  response = requests.get(
-    f"https://api.github.com/repos/{owner}/{repo}/contents/{path}",
-    headers=headers,
-    params=params,
-  )
-  
-  response.raise_for_status()
+    response = requests.get(
+        "https://api.github.com/installation/repositories",
+        headers=headers,
+    )
 
-  return response.json()
+    response.raise_for_status()
 
-def obter_conteudo_arquivo(installation_id: int, owner: str, repo: str, path: str, branch: str | None = None,):
-  token = gerar_installation_access_token(installation_id)
-  
-  headers = {
-    "Authorization": f"Bearer {token}",
-    "Accept": "application/vnd.github+json",
-    "X-GitHub-Api-Version": "2022-11-28",
-  }
-  
-  params = {}
+    dados = response.json()
 
-  if branch:
-    params["ref"] = branch
-  
-  response = requests.get(
-    f"https://api.github.com/repos/{owner}/{repo}/contents/{path}",
-    headers=headers,
-    params={"ref": branch}
-  )
-  
-  response.raise_for_status()
-  
-  dados = response.json()
-  
-  conteudo_base64 = dados["content"]
-  
-  conteudo = base64.b64decode(conteudo_base64).decode("utf-8")
-  
-  return conteudo
+    return dados["repositories"]
 
-def listar_arvore_repositorio(installation_id: int, owner: str, repo: str, branch: str = "main",
+
+def listar_conteudo_repositorio(
+    installation_id: int,
+    owner: str,
+    repo: str,
+    path: str = "",
+    branch: str | None = None,
 ):
-  token = gerar_installation_access_token(installation_id)
+    token = gerar_installation_access_token(installation_id)
 
-  headers = {
-    "Authorization": f"Bearer {token}",
-    "Accept": "application/vnd.github+json",
-    "X-GitHub-Api-Version": "2022-11-28",
-  }
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Accept": "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+    }
 
-  response = requests.get(
-    f"https://api.github.com/repos/{owner}/{repo}/git/trees/{branch}",
-    headers=headers,
-    params={"recursive": "1"},
-  )
+    params = {}
 
-  response.raise_for_status()
+    if branch:
+        params["ref"] = branch
 
-  dados = response.json()
+    response = requests.get(
+        f"https://api.github.com/repos/{owner}/{repo}/contents/{path}",
+        headers=headers,
+        params=params,
+    )
 
-  return dados["tree"]
-  
+    response.raise_for_status()
+
+    return response.json()
+
+
+def obter_conteudo_arquivo(
+    installation_id: int,
+    owner: str,
+    repo: str,
+    path: str,
+    branch: str | None = None,
+):
+    token = gerar_installation_access_token(installation_id)
+
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Accept": "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+    }
+
+    params = {}
+
+    if branch:
+        params["ref"] = branch
+
+    response = requests.get(
+        f"https://api.github.com/repos/{owner}/{repo}/contents/{path}",
+        headers=headers,
+        params=params,
+    )
+
+    response.raise_for_status()
+
+    dados = response.json()
+
+    conteudo_base64 = dados["content"]
+
+    conteudo = base64.b64decode(conteudo_base64).decode("utf-8")
+
+    return conteudo
+
+
+def listar_arvore_repositorio(
+    installation_id: int,
+    owner: str,
+    repo: str,
+    branch: str = "main",
+):
+    token = gerar_installation_access_token(installation_id)
+
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Accept": "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+    }
+
+    response = requests.get(
+        f"https://api.github.com/repos/{owner}/{repo}/git/trees/{branch}",
+        headers=headers,
+        params={"recursive": "1"},
+    )
+
+    response.raise_for_status()
+
+    dados = response.json()
+
+    return dados["tree"]
+
 
 def filtrar_arquivos_relevantes(itens):
-  arquivos = []
+    arquivos = []
 
-  for item in itens:
-    if item["type"] != "blob":
-      continue
+    for item in itens:
+        if item["type"] != "blob":
+            continue
 
-    path = item["path"]
-    caminho = Path(path)
+        path = item["path"]
+        caminho = Path(path)
 
-    if any(parte in PASTAS_IGNORADAS for parte in caminho.parts):
-      continue
+        if any(parte in PASTAS_IGNORADAS for parte in caminho.parts):
+            continue
 
-    if caminho.name in ARQUIVOS_IGNORADOS:
-      continue
+        if caminho.name in ARQUIVOS_IGNORADOS:
+            continue
 
-    if caminho.suffix.lower() in EXTENSOES_IGNORADAS:
-      continue
+        if caminho.suffix.lower() in EXTENSOES_IGNORADAS:
+            continue
 
-    arquivos.append(path)
+        arquivos.append(path)
 
-  return arquivos
+    return arquivos
+
 
 def carregar_arquivos_repositorio(
     installation_id: int,
@@ -233,10 +250,12 @@ def carregar_arquivos_repositorio(
                 branch,
             )
 
-            arquivos.append({
-                "path": path,
-                "content": conteudo,
-            })
+            arquivos.append(
+                {
+                    "path": path,
+                    "content": conteudo,
+                }
+            )
 
         except UnicodeDecodeError:
             continue
@@ -261,3 +280,20 @@ def obter_dados_instalacao(installation_id: int):
     response.raise_for_status()
 
     return response.json()
+
+
+def obter_github_private_key():
+    # Produção / Railway
+    if GITHUB_APP_PRIVATE_KEY:
+        return GITHUB_APP_PRIVATE_KEY.replace("\\n", "\n")
+
+    # Desenvolvimento local
+    if GITHUB_APP_PRIVATE_KEY_PATH:
+        with open(
+            GITHUB_APP_PRIVATE_KEY_PATH,
+            "r",
+            encoding="utf-8",
+        ) as private_key_file:
+            return private_key_file.read()
+
+    raise RuntimeError("Chave privada do GitHub App não configurada")
