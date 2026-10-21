@@ -8,6 +8,7 @@ from sqlalchemy import (
     DateTime,
     Boolean,
     UniqueConstraint,
+    CheckConstraint,
 )
 from sqlalchemy.orm import relationship
 from .database import Base
@@ -28,8 +29,42 @@ class Usuario(Base):
         "BoardMembro", back_populates="usuario", cascade="all, delete-orphan"
     )
 
+    # Perfil profissional geral do usuário
+    perfil_profissional = relationship(
+        "PerfilProfissional",
+        back_populates="usuario",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )
+
     github_installations_criadas = relationship(
         "GitHubInstallation", back_populates="created_by_user"
+    )
+
+
+class PerfilProfissional(Base):
+    __tablename__ = "perfil_profissional"
+
+    # 1 usuário possui no máximo 1 perfil profissional.
+    # Por isso usuario_email também é a chave primária.
+    usuario_email = Column(
+        String,
+        ForeignKey("usuario.email", ondelete="CASCADE"),
+        primary_key=True,
+    )
+
+    # Dados gerais do questionário profissional
+    area = Column(String, nullable=True)
+    profession = Column(String, nullable=True)
+    specialization = Column(String, nullable=True)
+    role = Column(String, nullable=True)
+    seniority = Column(String, nullable=True)
+    experience_time = Column(String, nullable=True)
+
+    # Relacionamento
+    usuario = relationship(
+        "Usuario",
+        back_populates="perfil_profissional",
     )
 
 
@@ -112,6 +147,23 @@ class BoardMembro(Base):
     board_id = Column(Integer, ForeignKey("board.id_board"), nullable=False)
     usuario_email = Column(String, ForeignKey("usuario.email"), nullable=False)
     tag = Column(String)
+
+    project_role = Column(String, nullable=True)
+    participation_type = Column(String, nullable=True)
+    weekly_hours = Column(Integer, nullable=True)
+
+    __table_args__ = (
+        UniqueConstraint(
+            "board_id",
+            "usuario_email",
+            name="uq_board_membro",
+        ),
+        CheckConstraint(
+            "weekly_hours IS NULL OR " 
+            "(weekly_hours >= 0 AND weekly_hours <= 168)",
+            name="ck_board_membro_weekly_hours",
+        ),
+    )
 
     board = relationship("Board", back_populates="membros")
     usuario = relationship("Usuario", back_populates="membro_boards")
