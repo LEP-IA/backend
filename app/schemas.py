@@ -188,3 +188,62 @@ class BoardRepositoryBranchUpdate(BaseModel):
         min_length=1,
         max_length=255,
     )
+    
+
+# ---------------------------------------------------------
+# PERFIL PROFISSIONAL GERAL DO USUÁRIO
+# ---------------------------------------------------------
+
+class PerfilProfissionalBase(BaseModel):
+    area: str
+    profession: str
+    specialization: str
+    role: str
+    seniority: str
+    experience_time: str
+
+
+class PerfilProfissionalUpdate(BaseModel):
+    area: str
+    profession: str
+    specialization: str
+    role: str
+    seniority: str
+    experience_time: str
+
+
+class PerfilProfissionalOut(BaseModel):
+    area: Optional[str] = None
+    profession: Optional[str] = None
+    specialization: Optional[str] = None
+    role: Optional[str] = None
+    seniority: Optional[str] = None
+    experience_time: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+# ---------------------------------------------------------
+# PERFIL PROFISSIONAL DO MEMBRO DENTRO DO BOARD
+# ---------------------------------------------------------
+
+class BoardMembroPerfilBase(BaseModel):
+    project_role: str
+    participation_type: str
+    weekly_hours: int = Field(ge=0, le=168)
+
+
+class BoardMembroPerfilUpdate(BaseModel):
+    project_role: str
+    participation_type: str
+    weekly_hours: int = Field(ge=0, le=168)
+
+
+class BoardMembroPerfilOut(BaseModel):
+    project_role: Optional[str] = None
+    participation_type: Optional[str] = None
+    weekly_hours: Optional[int] = Field(None, ge=0, le=168)
+
+    class Config:
+        from_attributes = True
