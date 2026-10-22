@@ -9,6 +9,8 @@ from sqlalchemy import (
     Boolean,
     UniqueConstraint,
     CheckConstraint,
+    Index,
+    text,
 )
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import relationship
@@ -157,6 +159,47 @@ class Tarefa(Base):
     board = relationship("Board", back_populates="tarefas")
     responsavel = relationship("Usuario")
     dependencia = relationship("Tarefa", remote_side=[id_tarefa], uselist=False)
+
+    # Histórico de permanência da tarefa em cada coluna (só uso interno do backend)
+    historico_colunas = relationship(
+        "TarefaColunaHistorico",
+        back_populates="tarefa",
+        cascade="all, delete-orphan",
+        order_by="TarefaColunaHistorico.entrou_em",
+    )
+
+
+class TarefaColunaHistorico(Base):
+    """Uma passagem da tarefa por uma coluna.
+
+    Cada vez que a tarefa entra numa coluna (criação ou mudança de status) é
+    criada uma linha com `saiu_em` vazio. Ao sair da coluna, `saiu_em` é
+    preenchido. Existe no máximo uma linha aberta por tarefa.
+    """
+
+    __tablename__ = "tarefa_coluna_historico"
+
+    id = Column(Integer, primary_key=True, index=True)
+    tarefa_id = Column(
+        Integer,
+        ForeignKey("tarefa.id_tarefa", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    status = Column(String, nullable=False)  # coluna (mesmo valor de Tarefa.status)
+    entrou_em = Column(DateTime(timezone=True), nullable=False)
+    saiu_em = Column(DateTime(timezone=True), nullable=True)
+
+    __table_args__ = (
+        Index(
+            "uq_tarefa_coluna_aberta",
+            "tarefa_id",
+            unique=True,
+            postgresql_where=text("saiu_em IS NULL"),
+        ),
+    )
+
+    tarefa = relationship("Tarefa", back_populates="historico_colunas")
 
 
 class BoardMembro(Base):

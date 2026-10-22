@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
 from . import models, schemas
+from .services import task_time_service
 
 
 def get_task_by_id(db: Session, task_id: int) -> models.Tarefa | None:
@@ -47,6 +48,8 @@ def create_task(db: Session, task_in: schemas.TaskCreate) -> models.Tarefa:
         complexity=task_in.complexity,
     )
     db.add(db_task)
+    # Começa a contar o tempo da tarefa na coluna em que ela foi criada
+    task_time_service.registrar_mudanca_status(db, db_task, db_task.status)
     db.commit()
     db.refresh(db_task)
     return db_task
@@ -67,6 +70,8 @@ def update_task(db: Session, task_id: int, task_in: schemas.TaskUpdate) -> model
 
     task_db.titulo = task_in.title
     task_db.descricao = task_in.description
+    # Se mudou de coluna, fecha a passagem anterior e abre a da nova coluna
+    task_time_service.registrar_mudanca_status(db, task_db, task_in.status)
     task_db.status = task_in.status
     task_db.tag = task_in.tag
     task_db.data_inicio = task_in.startDate

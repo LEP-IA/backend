@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app import schemas, crud
+from app.services import task_time_service
 from app.database import get_db
 from app.security import get_current_user
 
@@ -38,6 +39,27 @@ def update_task(
             detail="Tarefa não encontrada",
         )
     return crud.build_task_out(task_db)
+
+
+@router.get("/{task_id}/tempo-por-coluna", response_model=schemas.TaskColumnTimeOut)
+def get_task_time_by_column(
+    task_id: int,
+    db: Session = Depends(get_db),
+    _usuario_logado=Depends(get_current_user),
+):
+    """Dias que a tarefa ficou em cada coluna (uso interno, não aparece no front)."""
+    task_db = crud.get_task_by_id(db, task_id)
+    if not task_db:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Tarefa não encontrada",
+        )
+    return schemas.TaskColumnTimeOut(
+        task_id=str(task_db.id_tarefa),
+        current_status=task_db.status,
+        days_by_status=task_time_service.dias_por_coluna(task_db),
+        total_days=task_time_service.dias_de_duracao(task_db),
+    )
 
 
 @router.delete("/{task_id}")

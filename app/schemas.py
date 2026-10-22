@@ -106,6 +106,14 @@ class TaskOut(BaseModel):
 class TaskListResponse(BaseModel):
     tasks: List[TaskOut]
 
+class TaskColumnTimeOut(BaseModel):
+    task_id: str
+    current_status: str
+    # Dias que a tarefa ficou em cada coluna: {"BACKLOG": 2, "DOING": 3}
+    days_by_status: dict[str, int]
+    # Duração da tarefa: conta ao sair do backlog e congela ao chegar em concluído
+    total_days: int
+
 class SignupRequest(BaseModel):
     name: str
     email: EmailStr
