@@ -7,6 +7,7 @@ from sqlalchemy import (
     ForeignKey,
     DateTime,
     Boolean,
+    Float,
     UniqueConstraint,
     CheckConstraint,
     Index,
@@ -154,6 +155,10 @@ class Tarefa(Base):
     # Datas de início e fim em formato datetime
     data_inicio = Column(DateTime, nullable=True)
     data_fim = Column(DateTime, nullable=True)
+
+    # Previsão do prazo_model (dias úteis e horas de esforço); vazia se não calculada
+    previsao_dias = Column(Float, nullable=True)
+    previsao_esforco_horas = Column(Float, nullable=True)
 
     # Relacionamentos
     board = relationship("Board", back_populates="tarefas")

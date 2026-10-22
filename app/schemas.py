@@ -101,6 +101,11 @@ class TaskOut(BaseModel):
     prioridade: Optional[str] = None
     technologies: Optional[List[str]] = None
     complexity: Optional[str] = None
+    # Previsão do prazo_model em dias úteis (None se ainda não foi calculada)
+    predictedDays: Optional[float] = None
+    predictedEffortHours: Optional[float] = None
+    # Dias que a tarefa levou: conta ao sair do backlog e congela ao concluir
+    daysTaken: int = 0
 
 
 class TaskListResponse(BaseModel):

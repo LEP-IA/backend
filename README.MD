@@ -204,6 +204,29 @@ Response Body:
 }
 ```
     
+## Previsão de prazo e dias gastos
+
+Toda tarefa devolvida pela API (criação, edição e listagens) traz três campos calculados:
+
+- **predictedDays:** previsão do `prazo_model`, em dias úteis. `null` enquanto não houver previsão.
+- **predictedEffortHours:** esforço estimado pelo modelo, em horas.
+- **daysTaken:** dias que a tarefa levou. Começa a contar ao sair do BACKLOG e congela ao chegar em DONE.
+
+As datas `startDate`/`endDate` não são mais enviadas pelo front; se não vierem no `PUT`, o valor salvo é mantido.
+
+**Como a previsão é feita:** ao criar a tarefa (e ao editar responsável, complexidade ou prioridade) o backend chama `POST {PRAZO_MODEL_URL}/estimar-prazo` com:
+
+| Campo enviado | Origem |
+|---|---|
+| `tarefa_id` | id da tarefa (só identifica; o modelo devolve o mesmo valor e o backend descarta a resposta se for outro) |
+| `usuario_id` | e-mail do responsável (só identifica; não entra no cálculo) |
+| `area` | `perfil_profissional.area` do responsável (sem perfil ou área livre = "Outro") |
+| `horas_semanais` | `board_membro.weekly_hours` do responsável **naquele board** |
+| `complexidade` | `tarefa.complexity` (vazia = "Média", até a IA definir) |
+| `prioridade` | `tarefa.prioridade` (vazia = "Média") |
+
+Sem `weekly_hours` do responsável no board não há previsão. Se o modelo estiver fora do ar a tarefa é salva normalmente e a previsão é tentada de novo na próxima edição. Variáveis: `PRAZO_MODEL_URL` (vazia desliga a previsão) e `PRAZO_MODEL_TIMEOUT` (segundos, padrão 5).
+
 ## Exclusão da tarefa
     
 Este endpoint remove permanentemente uma tarefa do sistema.

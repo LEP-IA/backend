@@ -1,6 +1,6 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 from . import models, schemas
-from .services import task_time_service
+from .services import prazo_service, task_time_service
 
 
 def get_task_by_id(db: Session, task_id: int) -> models.Tarefa | None:
@@ -8,11 +8,20 @@ def get_task_by_id(db: Session, task_id: int) -> models.Tarefa | None:
 
 def list_tasks(db: Session) -> list[models.Tarefa]:
     """Retorna todas as tarefas idependente do board board."""
-    return db.query(models.Tarefa).all()
+    return (
+        db.query(models.Tarefa)
+        .options(selectinload(models.Tarefa.historico_colunas))
+        .all()
+    )
 
 def list_tasks_by_board(db: Session, board_id: int) -> list[models.Tarefa]:
     """Retorna todas as tarefas filtradas pelo ID do board."""
-    return db.query(models.Tarefa).filter(models.Tarefa.id_board == board_id).all()
+    return (
+        db.query(models.Tarefa)
+        .options(selectinload(models.Tarefa.historico_colunas))
+        .filter(models.Tarefa.id_board == board_id)
+        .all()
+    )
 
 def get_board(db: Session, board_id: int):
     return db.query(models.Board).filter(models.Board.id_board == board_id).first()
@@ -52,7 +61,17 @@ def create_task(db: Session, task_in: schemas.TaskCreate) -> models.Tarefa:
     task_time_service.registrar_mudanca_status(db, db_task, db_task.status)
     db.commit()
     db.refresh(db_task)
+
+    # A previsão precisa do id da tarefa, por isso só é pedida depois de salvar
+    _atualizar_previsao(db, db_task)
     return db_task
+
+
+def _atualizar_previsao(db: Session, task_db: models.Tarefa) -> None:
+    """Pede a previsão ao prazo_model e salva. Falhas não afetam a tarefa."""
+    if prazo_service.atualizar_previsao(db, task_db):
+        db.commit()
+        db.refresh(task_db)
 
 
 def update_task(db: Session, task_id: int, task_in: schemas.TaskUpdate) -> models.Tarefa | None:
@@ -68,14 +87,24 @@ def update_task(db: Session, task_id: int, task_in: schemas.TaskUpdate) -> model
     if task_in.dependencyId:
         dependencia = db.query(models.Tarefa).filter(models.Tarefa.id_tarefa == int(task_in.dependencyId)).first()
 
+    # Dados que alimentam o prazo_model: se mudarem, a previsão é refeita
+    entrada_anterior = (
+        task_db.responsavel_email,
+        task_db.complexity,
+        task_db.prioridade,
+    )
+
     task_db.titulo = task_in.title
     task_db.descricao = task_in.description
     # Se mudou de coluna, fecha a passagem anterior e abre a da nova coluna
     task_time_service.registrar_mudanca_status(db, task_db, task_in.status)
     task_db.status = task_in.status
     task_db.tag = task_in.tag
-    task_db.data_inicio = task_in.startDate
-    task_db.data_fim = task_in.endDate
+    # O front não envia mais as datas; só altera se vierem na requisição
+    if "startDate" in task_in.model_fields_set:
+        task_db.data_inicio = task_in.startDate
+    if "endDate" in task_in.model_fields_set:
+        task_db.data_fim = task_in.endDate
     task_db.responsavel_email = responsavel.email
     task_db.dependencia_id = dependencia.id_tarefa if dependencia else None
     task_db.prioridade = task_in.prioridade
@@ -84,6 +113,15 @@ def update_task(db: Session, task_id: int, task_in: schemas.TaskUpdate) -> model
 
     db.commit()
     db.refresh(task_db)
+
+    entrada_atual = (
+        task_db.responsavel_email,
+        task_db.complexity,
+        task_db.prioridade,
+    )
+    # Também tenta de novo quando a tarefa ainda não tem previsão
+    if entrada_atual != entrada_anterior or task_db.previsao_dias is None:
+        _atualizar_previsao(db, task_db)
     return task_db
 
 
@@ -125,6 +163,9 @@ def build_task_out(task: models.Tarefa) -> schemas.TaskOut:
         prioridade=task.prioridade,
         technologies=task.technologies,
         complexity=task.complexity,
+        predictedDays=task.previsao_dias,
+        predictedEffortHours=task.previsao_esforco_horas,
+        daysTaken=task_time_service.dias_de_duracao(task),
     )
 
 def build_user_out(user: models.Usuario) -> schemas.UserOut:
