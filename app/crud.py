@@ -44,6 +44,7 @@ def create_task(db: Session, task_in: schemas.TaskCreate) -> models.Tarefa:
         dependencia_id=dependencia.id_tarefa if dependencia else None,
         prioridade=task_in.prioridade,
         technologies=task_in.technologies,
+        complexity=task_in.complexity,
     )
     db.add(db_task)
     db.commit()
@@ -74,6 +75,7 @@ def update_task(db: Session, task_id: int, task_in: schemas.TaskUpdate) -> model
     task_db.dependencia_id = dependencia.id_tarefa if dependencia else None
     task_db.prioridade = task_in.prioridade
     task_db.technologies = task_in.technologies
+    task_db.complexity = task_in.complexity
 
     db.commit()
     db.refresh(task_db)
@@ -117,6 +119,7 @@ def build_task_out(task: models.Tarefa) -> schemas.TaskOut:
         dependency=dependency,
         prioridade=task.prioridade,
         technologies=task.technologies,
+        complexity=task.complexity,
     )
 
 def build_user_out(user: models.Usuario) -> schemas.UserOut:

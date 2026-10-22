@@ -131,6 +131,7 @@ class Tarefa(Base):
     tag = Column(String, nullable=True)  # ex: #FRONTEND, #BACKEND
     prioridade = Column(String, nullable=True)  # baixo, médio, alto
     technologies = Column(ARRAY(String), nullable=True)
+    complexity = Column(String, nullable=True)
 
     # Datas de início e fim em formato datetime
     data_inicio = Column(DateTime, nullable=True)
