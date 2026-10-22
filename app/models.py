@@ -89,6 +89,22 @@ class Board(Base):
     id_board = Column(Integer, primary_key=True, index=True)
     nome = Column(String)
 
+    # Sprints do board.
+    # Sprint ativa: sprint_inicio preenchido e sprint_encerrada_em vazio.
+    # O número da sprint atual é calculado a partir de sprint_inicio e
+    # sprint_duracao_dias, então não precisa ser salvo.
+    sprint_duracao_dias = Column(Integer, nullable=True)  # 7 ou 14
+    sprint_inicio = Column(DateTime(timezone=True), nullable=True)
+    sprint_encerrada_em = Column(DateTime(timezone=True), nullable=True)
+    sprint_total = Column(Integer, nullable=True)  # sprints que durou ao encerrar
+
+    __table_args__ = (
+        CheckConstraint(
+            "sprint_duracao_dias IS NULL OR sprint_duracao_dias IN (7, 14)",
+            name="ck_board_sprint_duracao_dias",
+        ),
+    )
+
     # Chave estrangeira
     usuario_email = Column(
         String, ForeignKey("usuario.email"), nullable=False

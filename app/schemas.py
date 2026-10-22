@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Annotated, Optional, List
+from typing import Annotated, Literal, Optional, List
 from pydantic import BaseModel, EmailStr, Field, StringConstraints
 
 TaskStatus = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
@@ -159,9 +159,27 @@ class BoardBase(BaseModel):
 class BoardCreate(BoardBase):
     pass
 
+class SprintStart(BaseModel):
+    duracao_dias: Literal[7, 14]
+    # Opcional: início da sprint (ex.: meia-noite local do dono). Padrão: agora.
+    inicio: Optional[datetime] = None
+
+class SprintOut(BaseModel):
+    ativa: bool = False
+    duracao_dias: Optional[int] = None
+    inicio: Optional[datetime] = None
+    encerrada_em: Optional[datetime] = None
+    # Preenchidos só enquanto a sprint está ativa
+    numero_atual: Optional[int] = None
+    periodo_inicio: Optional[datetime] = None
+    periodo_fim: Optional[datetime] = None  # instante em que a sprint atual termina
+    # Preenchido só depois de encerrar: quantas sprints o projeto durou
+    total_sprints: Optional[int] = None
+
 class BoardOut(BoardBase):
     id_board: int
     membros: list[BoardMembroOut] = []
+    sprint: SprintOut = SprintOut()
     class Config:
         from_attributes = True
 

@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, or_
 from app import models, schemas
+from app.services import sprint_service
 from app.database import get_db
 from app.security import get_current_user
 from pydantic import BaseModel, EmailStr
@@ -38,7 +39,10 @@ def create_board(
         for m in membros
     ]
     return schemas.BoardOut(
-        id_board=db_board.id_board, nome=db_board.nome, membros=membros_out
+        id_board=db_board.id_board,
+        nome=db_board.nome,
+        membros=membros_out,
+        sprint=sprint_service.montar_sprint_out(db_board),
     )
 
 
@@ -70,7 +74,12 @@ def list_boards(
             for m in membros
         ]
         result.append(
-            schemas.BoardOut(id_board=b.id_board, nome=b.nome, membros=membros_out)
+            schemas.BoardOut(
+                id_board=b.id_board,
+                nome=b.nome,
+                membros=membros_out,
+                sprint=sprint_service.montar_sprint_out(b),
+            )
         )
     return schemas.BoardListResponse(boards=result)
 
@@ -116,7 +125,10 @@ def update_board(
         for m in membros
     ]
     return schemas.BoardOut(
-        id_board=db_board.id_board, nome=db_board.nome, membros=membros_out
+        id_board=db_board.id_board,
+        nome=db_board.nome,
+        membros=membros_out,
+        sprint=sprint_service.montar_sprint_out(db_board),
     )
 
 
@@ -232,3 +244,75 @@ def remover_membro_board(
     db.delete(membro)
     db.commit()
     return {"message": f"Usuário {usuario_email} removido do board {board_id}."}
+
+def _board_out(db: Session, board: models.Board) -> schemas.BoardOut:
+    membros = (
+        db.query(models.BoardMembro)
+        .filter(models.BoardMembro.board_id == board.id_board)
+        .all()
+    )
+    return schemas.BoardOut(
+        id_board=board.id_board,
+        nome=board.nome,
+        membros=[
+            schemas.BoardMembroOut(usuario_email=m.usuario_email, tag=m.tag)
+            for m in membros
+        ],
+        sprint=sprint_service.montar_sprint_out(board),
+    )
+
+
+def _get_board_como_dono(
+    db: Session, board_id: int, user: models.Usuario, acao: str
+) -> models.Board:
+    board = db.query(models.Board).filter(models.Board.id_board == board_id).first()
+    if not board:
+        raise HTTPException(status_code=404, detail="Board não encontrado")
+
+    is_owner_user = board.usuario_email == user.email
+    is_owner_member = (
+        db.query(models.BoardMembro)
+        .filter(
+            models.BoardMembro.board_id == board_id,
+            models.BoardMembro.usuario_email == user.email,
+            models.BoardMembro.tag == "dono",
+        )
+        .first()
+        is not None
+    )
+    if not (is_owner_user or is_owner_member):
+        raise HTTPException(status_code=403, detail=f"Apenas o dono pode {acao}")
+    return board
+
+
+@router.post("/{board_id}/sprint/iniciar", response_model=schemas.BoardOut)
+def iniciar_sprint(
+    board_id: int,
+    payload: schemas.SprintStart,
+    db: Session = Depends(get_db),
+    user: models.Usuario = Depends(get_current_user),
+):
+    board = _get_board_como_dono(db, board_id, user, "iniciar a sprint")
+    try:
+        sprint_service.iniciar_sprint(board, payload.duracao_dias, payload.inicio)
+    except sprint_service.SprintError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=str(exc))
+    db.commit()
+    db.refresh(board)
+    return _board_out(db, board)
+
+
+@router.post("/{board_id}/sprint/encerrar", response_model=schemas.BoardOut)
+def encerrar_sprint(
+    board_id: int,
+    db: Session = Depends(get_db),
+    user: models.Usuario = Depends(get_current_user),
+):
+    board = _get_board_como_dono(db, board_id, user, "encerrar a sprint")
+    try:
+        sprint_service.encerrar_sprint(board)
+    except sprint_service.SprintError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=str(exc))
+    db.commit()
+    db.refresh(board)
+    return _board_out(db, board)
