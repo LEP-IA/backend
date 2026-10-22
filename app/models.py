@@ -10,6 +10,7 @@ from sqlalchemy import (
     UniqueConstraint,
     CheckConstraint,
 )
+from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import relationship
 from .database import Base
 
@@ -129,6 +130,7 @@ class Tarefa(Base):
     status = Column(String, nullable=False, index=True)  # BACKLOG, DOING, DONE
     tag = Column(String, nullable=True)  # ex: #FRONTEND, #BACKEND
     prioridade = Column(String, nullable=True)  # baixo, médio, alto
+    technologies = Column(ARRAY(String), nullable=True)
 
     # Datas de início e fim em formato datetime
     data_inicio = Column(DateTime, nullable=True)
