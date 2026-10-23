@@ -46,6 +46,7 @@ class TaskBase(BaseModel):
     dependencyId: Optional[str] = None
     technologies: Optional[List[str]] = None
     complexity: Optional[str] = None
+    resolucoes: Optional[List[str]] = None
 
 
 class TaskCreate(BaseModel):
@@ -61,6 +62,7 @@ class TaskCreate(BaseModel):
     prioridade: Optional[str] = Field(None, pattern="^(baixo|médio|alto)$")
     technologies: Optional[List[str]] = None
     complexity: Optional[str] = None
+    resolucoes: Optional[List[str]] = None
 
 
 class TaskUpdate(BaseModel):
@@ -75,6 +77,7 @@ class TaskUpdate(BaseModel):
     prioridade: Optional[str] = Field(None, pattern="^(baixo|médio|alto)$")
     technologies: Optional[List[str]] = None
     complexity: Optional[str] = None
+    resolucoes: Optional[List[str]] = None
 
 
 class TaskDependencySummary(BaseModel):
@@ -101,6 +104,7 @@ class TaskOut(BaseModel):
     prioridade: Optional[str] = None
     technologies: Optional[List[str]] = None
     complexity: Optional[str] = None
+    resolucoes: Optional[List[str]] = None
     # Previsão do prazo_model em dias úteis (None se ainda não foi calculada)
     predictedDays: Optional[float] = None
     predictedEffortHours: Optional[float] = None

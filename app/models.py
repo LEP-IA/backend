@@ -151,6 +151,7 @@ class Tarefa(Base):
     prioridade = Column(String, nullable=True)  # baixo, médio, alto
     technologies = Column(ARRAY(String), nullable=True)
     complexity = Column(String, nullable=True)
+    resolucoes = Column(ARRAY(String), nullable=True)
 
     # Datas de início e fim em formato datetime
     data_inicio = Column(DateTime, nullable=True)

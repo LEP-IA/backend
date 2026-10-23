@@ -56,6 +56,7 @@ def create_task(db: Session, task_in: schemas.TaskCreate) -> models.Tarefa:
         prioridade=task_in.prioridade,
         technologies=task_in.technologies,
         complexity=task_in.complexity,
+        resolucoes=task_in.resolucoes,
     )
     db.add(db_task)
     # Começa a contar o tempo da tarefa na coluna em que ela foi criada
@@ -114,6 +115,8 @@ def update_task(db: Session, task_id: int, task_in: schemas.TaskUpdate) -> model
     task_db.prioridade = task_in.prioridade
     task_db.technologies = task_in.technologies
     task_db.complexity = task_in.complexity
+    if "resolucoes" in task_in.model_fields_set:
+        task_db.resolucoes = task_in.resolucoes
 
     db.commit()
     db.refresh(task_db)
@@ -177,6 +180,7 @@ def build_task_out(task: models.Tarefa) -> schemas.TaskOut:
         prioridade=task.prioridade,
         technologies=task.technologies,
         complexity=task.complexity,
+        resolucoes=task.resolucoes or [],
         predictedDays=task.previsao_dias,
         predictedEffortHours=task.previsao_esforco_horas,
         daysTaken=task_time_service.dias_de_duracao(task),
