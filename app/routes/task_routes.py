@@ -41,6 +41,48 @@ def update_task(
     return crud.build_task_out(task_db)
 
 
+@router.get("/{task_id}/comments", response_model=schemas.TaskCommentListResponse)
+def list_task_comments(
+    task_id: int,
+    db: Session = Depends(get_db),
+    _usuario_logado=Depends(get_current_user),
+):
+    """Lista os comentários da tarefa, do mais antigo para o mais recente."""
+    task_db = crud.get_task_by_id(db, task_id)
+    if not task_db:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Tarefa não encontrada",
+        )
+    comments = crud.list_task_comments(db, task_id)
+    return schemas.TaskCommentListResponse(
+        comments=[crud.build_comment_out(comment) for comment in comments]
+    )
+
+
+@router.post(
+    "/{task_id}/comments",
+    response_model=schemas.TaskCommentOut,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_task_comment(
+    task_id: int,
+    comment_in: schemas.TaskCommentCreate,
+    db: Session = Depends(get_db),
+    usuario_logado=Depends(get_current_user),
+):
+    """Salva um comentário na tarefa. Qualquer pessoa autenticada pode comentar."""
+    comment = crud.create_task_comment(
+        db, task_id, usuario_logado.email, comment_in.text
+    )
+    if not comment:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Tarefa não encontrada",
+        )
+    return crud.build_comment_out(comment)
+
+
 @router.get("/{task_id}/tempo-por-coluna", response_model=schemas.TaskColumnTimeOut)
 def get_task_time_by_column(
     task_id: int,

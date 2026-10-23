@@ -33,6 +33,24 @@ def dia_de_criacao(tarefa: models.Tarefa) -> date:
     return _dia(_agora())
 
 
+def criada_em(tarefa: models.Tarefa) -> Optional[datetime]:
+    """Momento (UTC) em que a tarefa entrou na primeira coluna, ou seja, foi criada."""
+    if tarefa.historico_colunas:
+        return _com_timezone(tarefa.historico_colunas[0].entrou_em)
+    return None
+
+
+def concluida_em(tarefa: models.Tarefa) -> Optional[datetime]:
+    """Momento (UTC) em que a tarefa chegou em concluído; vazio se não está concluída.
+
+    Se a tarefa foi reaberta, não conta como concluída até concluir de novo.
+    """
+    aberta = _passagem_aberta(tarefa)
+    if aberta is not None and _eh_concluido(aberta.status):
+        return _com_timezone(aberta.entrou_em)
+    return None
+
+
 def _passagem_aberta(
     tarefa: models.Tarefa,
 ) -> Optional[models.TarefaColunaHistorico]:

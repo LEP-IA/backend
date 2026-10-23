@@ -173,6 +173,13 @@ class Tarefa(Base):
         order_by="TarefaColunaHistorico.entrou_em",
     )
 
+    comentarios = relationship(
+        "TarefaComentario",
+        back_populates="tarefa",
+        cascade="all, delete-orphan",
+        order_by="TarefaComentario.criado_em",
+    )
+
 
 class TarefaColunaHistorico(Base):
     """Uma passagem da tarefa por uma coluna.
@@ -205,6 +212,26 @@ class TarefaColunaHistorico(Base):
     )
 
     tarefa = relationship("Tarefa", back_populates="historico_colunas")
+
+
+class TarefaComentario(Base):
+    """Comentário de um membro na tarefa. Não é descrição: cada um é um registro novo."""
+
+    __tablename__ = "tarefa_comentario"
+
+    id = Column(Integer, primary_key=True, index=True)
+    tarefa_id = Column(
+        Integer,
+        ForeignKey("tarefa.id_tarefa", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    autor_email = Column(String, ForeignKey("usuario.email"), nullable=False)
+    texto = Column(Text, nullable=False)
+    criado_em = Column(DateTime(timezone=True), nullable=False)
+
+    tarefa = relationship("Tarefa", back_populates="comentarios")
+    autor = relationship("Usuario")
 
 
 class BoardMembro(Base):

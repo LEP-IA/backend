@@ -106,10 +106,28 @@ class TaskOut(BaseModel):
     predictedEffortHours: Optional[float] = None
     # Dias que a tarefa levou: conta ao sair do backlog e congela ao concluir
     daysTaken: int = 0
+    # Momentos reais (UTC) de criação e de conclusão; usados no burndown das métricas
+    createdAt: Optional[datetime] = None
+    completedAt: Optional[datetime] = None
 
 
 class TaskListResponse(BaseModel):
     tasks: List[TaskOut]
+
+
+class TaskCommentCreate(BaseModel):
+    text: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=4000)]
+
+
+class TaskCommentOut(BaseModel):
+    id: str
+    text: str
+    createdAt: datetime
+    author: UserSummary
+
+
+class TaskCommentListResponse(BaseModel):
+    comments: List[TaskCommentOut]
 
 class TaskColumnTimeOut(BaseModel):
     task_id: str

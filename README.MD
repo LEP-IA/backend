@@ -211,6 +211,7 @@ Toda tarefa devolvida pela API (criação, edição e listagens) traz três camp
 - **predictedDays:** previsão do `prazo_model`, em dias úteis. `null` enquanto não houver previsão.
 - **predictedEffortHours:** esforço estimado pelo modelo, em horas.
 - **daysTaken:** dias que a tarefa levou. Começa a contar ao sair do BACKLOG e congela ao chegar em DONE.
+- **createdAt / completedAt:** momentos reais (UTC) de criação e de conclusão. `completedAt` é `null` se a tarefa não está em DONE (ao reabrir, volta a `null`). Alimentam o burndown da tela de Métricas. Tarefas anteriores ao histórico de colunas usam como `createdAt` o dia em que a migration foi aplicada.
 
 `startDate` é informado ao criar a tarefa (se não vier no `PUT`, o valor salvo é mantido). `endDate` **não é informado**: o backend calcula e ignora o que o cliente enviar. Ele é o último dia útil do prazo previsto contado a partir do `startDate` (sábado e domingo não contam, feriados não são considerados; 1 dia útil termina no mesmo dia). Se o `startDate` mudar, o `endDate` é recalculado com a previsão já salva, sem chamar o modelo de novo. Sem previsão, `endDate` fica `null`. Em BACKLOG `daysTaken` é sempre 0.
 

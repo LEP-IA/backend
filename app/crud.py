@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from sqlalchemy.orm import Session, selectinload
 from . import models, schemas
 from .services import prazo_service, task_time_service
@@ -179,6 +180,8 @@ def build_task_out(task: models.Tarefa) -> schemas.TaskOut:
         predictedDays=task.previsao_dias,
         predictedEffortHours=task.previsao_esforco_horas,
         daysTaken=task_time_service.dias_de_duracao(task),
+        createdAt=task_time_service.criada_em(task),
+        completedAt=task_time_service.concluida_em(task),
     )
 
 def build_user_out(user: models.Usuario) -> schemas.UserOut:
@@ -211,6 +214,54 @@ def is_user_board_member(db: Session, board_id: int, usuario_email: str) -> bool
         models.BoardMembro.board_id == board_id,
         models.BoardMembro.usuario_email == usuario_email
     ).first() is not None
+
+def list_task_comments(db: Session, task_id: int) -> list[models.TarefaComentario]:
+    return (
+        db.query(models.TarefaComentario)
+        .options(selectinload(models.TarefaComentario.autor))
+        .filter(models.TarefaComentario.tarefa_id == task_id)
+        .order_by(models.TarefaComentario.criado_em.asc())
+        .all()
+    )
+
+
+def create_task_comment(
+    db: Session, task_id: int, autor_email: str, texto: str
+) -> models.TarefaComentario | None:
+    if get_task_by_id(db, task_id) is None:
+        return None
+
+    comment = models.TarefaComentario(
+        tarefa_id=task_id,
+        autor_email=autor_email,
+        texto=texto,
+        criado_em=datetime.now(timezone.utc),
+    )
+    db.add(comment)
+    db.commit()
+    db.refresh(comment)
+    return (
+        db.query(models.TarefaComentario)
+        .options(selectinload(models.TarefaComentario.autor))
+        .filter(models.TarefaComentario.id == comment.id)
+        .one()
+    )
+
+
+def build_comment_out(comment: models.TarefaComentario) -> schemas.TaskCommentOut:
+    autor = comment.autor
+    return schemas.TaskCommentOut(
+        id=str(comment.id),
+        text=comment.texto,
+        createdAt=comment.criado_em,
+        author=schemas.UserSummary(
+            id=autor.email,
+            name=autor.nome or autor.email,
+            email=autor.email,
+            avatarUrl=autor.avatar_url,
+        ),
+    )
+
 
 def add_board_member(db: Session, board_id: int, usuario_email: str, tag: str):
     membro = models.BoardMembro(board_id=board_id, usuario_email=usuario_email, tag=tag)
