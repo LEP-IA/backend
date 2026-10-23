@@ -1,4 +1,5 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 
 from .routes import  user_routes
 from app.routes import task_routes
@@ -33,6 +34,18 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.exception_handler(Exception)
+async def unhandled_error(request: Request, _exc: Exception):
+    """Garante CORS mesmo em 500; sem isso o browser mostra 'blocked by CORS'."""
+    origin = request.headers.get("origin")
+    response = JSONResponse(status_code=500, content={"detail": "Erro interno do servidor"})
+    if origin in origins:
+        response.headers["Access-Control-Allow-Origin"] = origin
+        response.headers["Access-Control-Allow-Credentials"] = "true"
+        response.headers["Vary"] = "Origin"
+    return response
+
 
 app.include_router(user_routes.router)
 app.include_router(task_routes.router)
