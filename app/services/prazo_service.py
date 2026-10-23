@@ -86,6 +86,9 @@ def montar_entrada(db: Session, tarefa: models.Tarefa) -> Optional[dict]:
     Retorna None quando falta algum dado indispensável: sem as horas semanais
     do responsável no board não há como calcular o prazo.
     """
+    if not tarefa.responsavel_email:
+        return None
+
     membro = (
         db.query(models.BoardMembro)
         .filter(

@@ -28,11 +28,18 @@ def get_board(db: Session, board_id: int):
     return db.query(models.Board).filter(models.Board.id_board == board_id).first()
 
 
-def create_task(db: Session, task_in: schemas.TaskCreate) -> models.Tarefa:
-    # Busca responsável
-    responsavel = db.query(models.Usuario).filter(models.Usuario.email == task_in.responsibleId).first()
+def _resolver_responsavel(db: Session, responsible_id: str | None) -> models.Usuario | None:
+    email = (responsible_id or "").strip() or None
+    if not email:
+        return None
+    responsavel = db.query(models.Usuario).filter(models.Usuario.email == email).first()
     if not responsavel:
         raise ValueError("Responsável não encontrado")
+    return responsavel
+
+
+def create_task(db: Session, task_in: schemas.TaskCreate) -> models.Tarefa:
+    responsavel = _resolver_responsavel(db, task_in.responsibleId)
 
     # Verifica se o board existe
     board = db.query(models.Board).filter(models.Board.id_board == task_in.boardId).first()
@@ -45,7 +52,7 @@ def create_task(db: Session, task_in: schemas.TaskCreate) -> models.Tarefa:
 
     db_task = models.Tarefa(
         id_board=task_in.boardId,
-        responsavel_email=responsavel.email,
+        responsavel_email=responsavel.email if responsavel else None,
         titulo=task_in.title,
         descricao=task_in.description,
         status=task_in.status,
@@ -55,6 +62,7 @@ def create_task(db: Session, task_in: schemas.TaskCreate) -> models.Tarefa:
         dependencia_id=dependencia.id_tarefa if dependencia else None,
         prioridade=task_in.prioridade,
         technologies=task_in.technologies,
+        focos=task_in.focos,
         complexity=task_in.complexity,
         resolucoes=task_in.resolucoes,
     )
@@ -83,9 +91,7 @@ def update_task(db: Session, task_id: int, task_in: schemas.TaskUpdate) -> model
     if not task_db:
         return None
 
-    responsavel = db.query(models.Usuario).filter(models.Usuario.email == task_in.responsibleId).first()
-    if not responsavel:
-        raise ValueError("Responsável não encontrado")
+    responsavel = _resolver_responsavel(db, task_in.responsibleId)
 
     dependencia = None
     if task_in.dependencyId:
@@ -110,10 +116,11 @@ def update_task(db: Session, task_id: int, task_in: schemas.TaskUpdate) -> model
     # mantém a data salva.
     if "startDate" in task_in.model_fields_set:
         task_db.data_inicio = task_in.startDate
-    task_db.responsavel_email = responsavel.email
+    task_db.responsavel_email = responsavel.email if responsavel else None
     task_db.dependencia_id = dependencia.id_tarefa if dependencia else None
     task_db.prioridade = task_in.prioridade
     task_db.technologies = task_in.technologies
+    task_db.focos = task_in.focos
     task_db.complexity = task_in.complexity
     if "resolucoes" in task_in.model_fields_set:
         task_db.resolucoes = task_in.resolucoes
@@ -154,12 +161,14 @@ def delete_task(db: Session, task_id: int) -> bool:
 # Helper para converter model em resposta do contrato
 
 def build_task_out(task: models.Tarefa) -> schemas.TaskOut:
-    responsible = schemas.UserSummary(
-        id=str(task.responsavel.email),
-        name=task.responsavel.nome,
-        email=task.responsavel.email,
-        avatarUrl=None,
-    )
+    responsible = None
+    if task.responsavel:
+        responsible = schemas.UserSummary(
+            id=str(task.responsavel.email),
+            name=task.responsavel.nome,
+            email=task.responsavel.email,
+            avatarUrl=None,
+        )
     dependency = None
     if task.dependencia:
         dependency = schemas.TaskDependencySummary(
@@ -179,6 +188,7 @@ def build_task_out(task: models.Tarefa) -> schemas.TaskOut:
         dependency=dependency,
         prioridade=task.prioridade,
         technologies=task.technologies,
+        focos=task.focos or [],
         complexity=task.complexity,
         resolucoes=task.resolucoes or [],
         predictedDays=task.previsao_dias,

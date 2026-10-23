@@ -51,8 +51,26 @@ def atualizar_perfil_profissional(
     perfil.role = dados.role
     perfil.seniority = dados.seniority
     perfil.experience_time = dados.experience_time
+    if dados.technologies is not None:
+        perfil.technologies = dados.technologies
+    if dados.focos is not None:
+        perfil.focos = dados.focos
 
     db.commit()
     db.refresh(perfil)
 
     return perfil
+
+
+@router.get("/specializations", response_model=schemas.SpecializationsOut)
+def listar_especializacoes(
+    db: Session = Depends(get_db),
+    _usuario: models.Usuario = Depends(security.get_current_user),
+):
+    values = []
+    for perfil in db.query(models.PerfilProfissional).all():
+        if perfil.specialization:
+            values.append(perfil.specialization)
+        if perfil.focos:
+            values.extend(item for item in perfil.focos if item)
+    return schemas.SpecializationsOut(specializations=values)

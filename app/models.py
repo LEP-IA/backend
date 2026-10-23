@@ -64,6 +64,8 @@ class PerfilProfissional(Base):
     role = Column(String, nullable=True)
     seniority = Column(String, nullable=True)
     experience_time = Column(String, nullable=True)
+    technologies = Column(ARRAY(String), nullable=True)
+    focos = Column(ARRAY(String), nullable=True)
 
     # Relacionamento
     usuario = relationship(
@@ -138,7 +140,7 @@ class Tarefa(Base):
 
     # Chaves estrangeiras
     id_board = Column(Integer, ForeignKey("board.id_board"), nullable=False)
-    responsavel_email = Column(String, ForeignKey("usuario.email"), nullable=False)
+    responsavel_email = Column(String, ForeignKey("usuario.email"), nullable=True)
     dependencia_id = Column(
         Integer, ForeignKey("tarefa.id_tarefa", ondelete="SET NULL"), nullable=True
     )
@@ -150,6 +152,7 @@ class Tarefa(Base):
     tag = Column(String, nullable=True)  # ex: #FRONTEND, #BACKEND
     prioridade = Column(String, nullable=True)  # baixo, médio, alto
     technologies = Column(ARRAY(String), nullable=True)
+    focos = Column(ARRAY(String), nullable=True)
     complexity = Column(String, nullable=True)
     resolucoes = Column(ARRAY(String), nullable=True)
 

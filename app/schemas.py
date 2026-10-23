@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import Annotated, Literal, Optional, List
-from pydantic import BaseModel, EmailStr, Field, StringConstraints
+from pydantic import BaseModel, EmailStr, Field, StringConstraints, field_validator
 
 TaskStatus = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
 
@@ -42,9 +42,10 @@ class TaskBase(BaseModel):
     tag: Optional[str] = None
     startDate: Optional[datetime] = None
     endDate: Optional[datetime] = None
-    responsibleId: str
+    responsibleId: Optional[str] = None
     dependencyId: Optional[str] = None
     technologies: Optional[List[str]] = None
+    focos: Optional[List[str]] = None
     complexity: Optional[str] = None
     resolucoes: Optional[List[str]] = None
 
@@ -57,12 +58,20 @@ class TaskCreate(BaseModel):
     boardId: int
     startDate: Optional[datetime] = None
     endDate: Optional[datetime] = None
-    responsibleId: str
+    responsibleId: Optional[str] = None
     dependencyId: Optional[str] = None
     prioridade: Optional[str] = Field(None, pattern="^(baixo|médio|alto)$")
     technologies: Optional[List[str]] = None
+    focos: Optional[List[str]] = None
     complexity: Optional[str] = None
     resolucoes: Optional[List[str]] = None
+
+    @field_validator("responsibleId", mode="before")
+    @classmethod
+    def empty_responsible(cls, value):
+        if value is None or (isinstance(value, str) and not value.strip()):
+            return None
+        return value
 
 
 class TaskUpdate(BaseModel):
@@ -72,12 +81,20 @@ class TaskUpdate(BaseModel):
     tag: str
     startDate: Optional[datetime] = None
     endDate: Optional[datetime] = None
-    responsibleId: str
+    responsibleId: Optional[str] = None
     dependencyId: Optional[str] = None
     prioridade: Optional[str] = Field(None, pattern="^(baixo|médio|alto)$")
     technologies: Optional[List[str]] = None
+    focos: Optional[List[str]] = None
     complexity: Optional[str] = None
     resolucoes: Optional[List[str]] = None
+
+    @field_validator("responsibleId", mode="before")
+    @classmethod
+    def empty_responsible(cls, value):
+        if value is None or (isinstance(value, str) and not value.strip()):
+            return None
+        return value
 
 
 class TaskDependencySummary(BaseModel):
@@ -99,10 +116,11 @@ class TaskOut(BaseModel):
     tag: str
     startDate: Optional[datetime] = None
     endDate: Optional[datetime] = None
-    responsible: UserSummary
+    responsible: Optional[UserSummary] = None
     dependency: Optional[TaskDependencySummary] = None
     prioridade: Optional[str] = None
     technologies: Optional[List[str]] = None
+    focos: Optional[List[str]] = None
     complexity: Optional[str] = None
     resolucoes: Optional[List[str]] = None
     # Previsão do prazo_model em dias úteis (None se ainda não foi calculada)
@@ -262,6 +280,8 @@ class PerfilProfissionalBase(BaseModel):
     role: str
     seniority: str
     experience_time: str
+    technologies: Optional[List[str]] = None
+    focos: Optional[List[str]] = None
 
 
 class PerfilProfissionalUpdate(BaseModel):
@@ -271,6 +291,8 @@ class PerfilProfissionalUpdate(BaseModel):
     role: str
     seniority: str
     experience_time: str
+    technologies: Optional[List[str]] = None
+    focos: Optional[List[str]] = None
 
 
 class PerfilProfissionalOut(BaseModel):
@@ -280,9 +302,15 @@ class PerfilProfissionalOut(BaseModel):
     role: Optional[str] = None
     seniority: Optional[str] = None
     experience_time: Optional[str] = None
+    technologies: Optional[List[str]] = None
+    focos: Optional[List[str]] = None
 
     class Config:
         from_attributes = True
+
+
+class SpecializationsOut(BaseModel):
+    specializations: List[str] = []
 
 
 # ---------------------------------------------------------
