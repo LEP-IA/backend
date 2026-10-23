@@ -137,6 +137,18 @@ class TaskListResponse(BaseModel):
     tasks: List[TaskOut]
 
 
+class ExecutorSuggestionOut(BaseModel):
+    responsibleId: str
+    name: str
+    email: str
+    score: float
+    reasons: List[str] = []
+
+
+class ExecutorSuggestionListOut(BaseModel):
+    suggestions: List[ExecutorSuggestionOut] = []
+
+
 class TaskCommentCreate(BaseModel):
     text: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=4000)]
 

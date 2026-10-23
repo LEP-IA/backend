@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app import schemas, crud
-from app.services import task_time_service
+from app.services import executor_suggestion, task_time_service
 from app.database import get_db
 from app.security import get_current_user
 
@@ -81,6 +81,25 @@ def create_task_comment(
             detail="Tarefa não encontrada",
         )
     return crud.build_comment_out(comment)
+
+
+@router.get(
+    "/{task_id}/sugerir-executores",
+    response_model=schemas.ExecutorSuggestionListOut,
+)
+def sugerir_executores(
+    task_id: int,
+    db: Session = Depends(get_db),
+    _usuario_logado=Depends(get_current_user),
+):
+    """Sugere pelo menos 2 pessoas do board para executar a tarefa."""
+    resultado = executor_suggestion.sugerir_executores(db, task_id)
+    if resultado is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Tarefa não encontrada",
+        )
+    return resultado
 
 
 @router.get("/{task_id}/tempo-por-coluna", response_model=schemas.TaskColumnTimeOut)
