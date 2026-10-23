@@ -1,0 +1,148 @@
+{
+  "versions": [
+    "c47e9c7c63ff"
+  ],
+  "matches": [
+    "0e12730e1993"
+  ],
+  "differences": {
+    "29eb68aad3dc": [
+      "tables actual=['public.board', 'public.board_membro', 'public.chatia', 'public.tarefa', 'public.usuario'] expected=['public.board', 'public.chatia', 'public.tarefa', 'public.usuario']",
+      "tarefa: columns actual=['data_fim', 'data_inicio', 'dependencia_id', 'descricao', 'id_board', 'id_tarefa', 'prioridade', 'responsavel_email', 'status', 'tag', 'titulo'] expected=['data_fim', 'data_inicio', 'dependencia_id', 'descricao', 'id_board', 'id_tarefa', 'responsavel_email', 'status', 'tag', 'titulo']",
+      "tarefa: constraints actual=[('f', ('dependencia_id',), 'public', 'tarefa', ('id_tarefa',), 'n', 'a', 's'), ('f', ('id_board',), 'public', 'board', ('id_board',), 'a', 'a', 's'), ('f', ('responsavel_email',), 'public', 'usuario', ('email',), 'a', 'a', 's'), ('p', ('id_tarefa',))] expected=[('f', ('dependencia_id',), 'public', 'tarefa', ('id_tarefa',), 'a', 'a', 's'), ('f', ('id_board',), 'public', 'board', ('id_board',), 'a', 'a', 's'), ('f', ('responsavel_email',), 'public', 'usuario', ('email',), 'a', 'a', 's'), ('p', ('id_tarefa',))]"
+    ],
+    "7c15261ef02a": [
+      "tables actual=['public.board', 'public.board_membro', 'public.chatia', 'public.tarefa', 'public.usuario'] expected=['public.board', 'public.chatia', 'public.tarefa', 'public.usuario']",
+      "tarefa: columns actual=['data_fim', 'data_inicio', 'dependencia_id', 'descricao', 'id_board', 'id_tarefa', 'prioridade', 'responsavel_email', 'status', 'tag', 'titulo'] expected=['data_fim', 'data_inicio', 'dependencia_id', 'descricao', 'id_board', 'id_tarefa', 'responsavel_email', 'status', 'tag', 'titulo']"
+    ],
+    "b8364cc94341": [
+      "tarefa: columns actual=['data_fim', 'data_inicio', 'dependencia_id', 'descricao', 'id_board', 'id_tarefa', 'prioridade', 'responsavel_email', 'status', 'tag', 'titulo'] expected=['data_fim', 'data_inicio', 'dependencia_id', 'descricao', 'id_board', 'id_tarefa', 'responsavel_email', 'status', 'tag', 'titulo']"
+    ],
+    "0e12730e1993": [],
+    "b67af7761999": [
+      "tables actual=['public.board', 'public.board_membro', 'public.chatia', 'public.tarefa', 'public.usuario'] expected=['public.board', 'public.board_membro', 'public.chatia', 'public.github_installation', 'public.tarefa', 'public.usuario']"
+    ],
+    "a6a91b755ce7": [
+      "tables actual=['public.board', 'public.board_membro', 'public.chatia', 'public.tarefa', 'public.usuario'] expected=['public.board', 'public.board_membro', 'public.board_repository', 'public.chatia', 'public.github_installation', 'public.tarefa', 'public.usuario']"
+    ],
+    "dfdbe7ec3b9b": [
+      "tables actual=['public.board', 'public.board_membro', 'public.chatia', 'public.tarefa', 'public.usuario'] expected=['public.board', 'public.board_membro', 'public.board_repository', 'public.chatia', 'public.github_installation', 'public.perfil_profissional', 'public.tarefa', 'public.usuario']",
+      "board_membro: columns actual=['board_id', 'id', 'tag', 'usuario_email'] expected=['board_id', 'id', 'participation_type', 'project_role', 'tag', 'usuario_email', 'weekly_hours']",
+      "board_membro: constraints actual=[('f', ('board_id',), 'public', 'board', ('id_board',), 'a', 'a', 's'), ('f', ('usuario_email',), 'public', 'usuario', ('email',), 'a', 'a', 's'), ('p', ('id',))] expected=[('c', 'ck_board_membro_weekly_hours', 'weekly_hoursisnullorweekly_hours>=0andweekly_hours<=168'), ('f', ('board_id',), 'public', 'board', ('id_board',), 'a', 'a', 's'), ('f', ('usuario_email',), 'public', 'usuario', ('email',), 'a', 'a', 's'), ('p', ('id',)), ('u', 'uq_board_membro', ('board_id', 'usuario_email'))]"
+    ],
+    "0bae7c4a41ad": [
+      "tables actual=['public.board', 'public.board_membro', 'public.chatia', 'public.tarefa', 'public.usuario'] expected=['public.board', 'public.board_membro', 'public.board_repository', 'public.chatia', 'public.github_installation', 'public.perfil_profissional', 'public.tarefa', 'public.usuario']",
+      "tarefa: columns actual=['data_fim', 'data_inicio', 'dependencia_id', 'descricao', 'id_board', 'id_tarefa', 'prioridade', 'responsavel_email', 'status', 'tag', 'titulo'] expected=['data_fim', 'data_inicio', 'dependencia_id', 'descricao', 'id_board', 'id_tarefa', 'prioridade', 'responsavel_email', 'status', 'tag', 'technologies', 'titulo']",
+      "board_membro: columns actual=['board_id', 'id', 'tag', 'usuario_email'] expected=['board_id', 'id', 'participation_type', 'project_role', 'tag', 'usuario_email', 'weekly_hours']",
+      "board_membro: constraints actual=[('f', ('board_id',), 'public', 'board', ('id_board',), 'a', 'a', 's'), ('f', ('usuario_email',), 'public', 'usuario', ('email',), 'a', 'a', 's'), ('p', ('id',))] expected=[('c', 'ck_board_membro_weekly_hours', 'weekly_hoursisnullorweekly_hours>=0andweekly_hours<=168'), ('f', ('board_id',), 'public', 'board', ('id_board',), 'a', 'a', 's'), ('f', ('usuario_email',), 'public', 'usuario', ('email',), 'a', 'a', 's'), ('p', ('id',)), ('u', 'uq_board_membro', ('board_id', 'usuario_email'))]"
+    ],
+    "820d7c1eb3de": [
+      "tables actual=['public.board', 'public.board_membro', 'public.chatia', 'public.tarefa', 'public.usuario'] expected=['public.board', 'public.board_membro', 'public.board_repository', 'public.chatia', 'public.github_installation', 'public.perfil_profissional', 'public.tarefa', 'public.usuario']",
+      "tarefa: columns actual=['data_fim', 'data_inicio', 'dependencia_id', 'descricao', 'id_board', 'id_tarefa', 'prioridade', 'responsavel_email', 'status', 'tag', 'titulo'] expected=['complexity', 'data_fim', 'data_inicio', 'dependencia_id', 'descricao', 'id_board', 'id_tarefa', 'prioridade', 'responsavel_email', 'status', 'tag', 'technologies', 'titulo']",
+      "board_membro: columns actual=['board_id', 'id', 'tag', 'usuario_email'] expected=['board_id', 'id', 'participation_type', 'project_role', 'tag', 'usuario_email', 'weekly_hours']",
+      "board_membro: constraints actual=[('f', ('board_id',), 'public', 'board', ('id_board',), 'a', 'a', 's'), ('f', ('usuario_email',), 'public', 'usuario', ('email',), 'a', 'a', 's'), ('p', ('id',))] expected=[('c', 'ck_board_membro_weekly_hours', 'weekly_hoursisnullorweekly_hours>=0andweekly_hours<=168'), ('f', ('board_id',), 'public', 'board', ('id_board',), 'a', 'a', 's'), ('f', ('usuario_email',), 'public', 'usuario', ('email',), 'a', 'a', 's'), ('p', ('id',)), ('u', 'uq_board_membro', ('board_id', 'usuario_email'))]"
+    ],
+    "c3f1a9d27b4e": [
+      "tables actual=['public.board', 'public.board_membro', 'public.chatia', 'public.tarefa', 'public.usuario'] expected=['public.board', 'public.board_membro', 'public.board_repository', 'public.chatia', 'public.github_installation', 'public.perfil_profissional', 'public.tarefa', 'public.usuario']",
+      "board: columns actual=['id_board', 'nome', 'usuario_email'] expected=['id_board', 'nome', 'sprint_duracao_dias', 'sprint_encerrada_em', 'sprint_inicio', 'sprint_total', 'usuario_email']",
+      "board: constraints actual=[('f', ('usuario_email',), 'public', 'usuario', ('email',), 'a', 'a', 's'), ('p', ('id_board',))] expected=[('c', 'ck_board_sprint_duracao_dias', 'sprint_duracao_diasisnullorsprint_duracao_diasin7,14'), ('f', ('usuario_email',), 'public', 'usuario', ('email',), 'a', 'a', 's'), ('p', ('id_board',))]",
+      "tarefa: columns actual=['data_fim', 'data_inicio', 'dependencia_id', 'descricao', 'id_board', 'id_tarefa', 'prioridade', 'responsavel_email', 'status', 'tag', 'titulo'] expected=['complexity', 'data_fim', 'data_inicio', 'dependencia_id', 'descricao', 'id_board', 'id_tarefa', 'prioridade', 'responsavel_email', 'status', 'tag', 'technologies', 'titulo']",
+      "board_membro: columns actual=['board_id', 'id', 'tag', 'usuario_email'] expected=['board_id', 'id', 'participation_type', 'project_role', 'tag', 'usuario_email', 'weekly_hours']",
+      "board_membro: constraints actual=[('f', ('board_id',), 'public', 'board', ('id_board',), 'a', 'a', 's'), ('f', ('usuario_email',), 'public', 'usuario', ('email',), 'a', 'a', 's'), ('p', ('id',))] expected=[('c', 'ck_board_membro_weekly_hours', 'weekly_hoursisnullorweekly_hours>=0andweekly_hours<=168'), ('f', ('board_id',), 'public', 'board', ('id_board',), 'a', 'a', 's'), ('f', ('usuario_email',), 'public', 'usuario', ('email',), 'a', 'a', 's'), ('p', ('id',)), ('u', 'uq_board_membro', ('board_id', 'usuario_email'))]"
+    ],
+    "d4a7e2b91c05": [
+      "tables actual=['public.board', 'public.board_membro', 'public.chatia', 'public.tarefa', 'public.usuario'] expected=['public.board', 'public.board_membro', 'public.board_repository', 'public.chatia', 'public.github_installation', 'public.perfil_profissional', 'public.tarefa', 'public.tarefa_coluna_historico', 'public.usuario']",
+      "board: columns actual=['id_board', 'nome', 'usuario_email'] expected=['id_board', 'nome', 'sprint_duracao_dias', 'sprint_encerrada_em', 'sprint_inicio', 'sprint_total', 'usuario_email']",
+      "board: constraints actual=[('f', ('usuario_email',), 'public', 'usuario', ('email',), 'a', 'a', 's'), ('p', ('id_board',))] expected=[('c', 'ck_board_sprint_duracao_dias', 'sprint_duracao_diasisnullorsprint_duracao_diasin7,14'), ('f', ('usuario_email',), 'public', 'usuario', ('email',), 'a', 'a', 's'), ('p', ('id_board',))]",
+      "tarefa: columns actual=['data_fim', 'data_inicio', 'dependencia_id', 'descricao', 'id_board', 'id_tarefa', 'prioridade', 'responsavel_email', 'status', 'tag', 'titulo'] expected=['complexity', 'data_fim', 'data_inicio', 'dependencia_id', 'descricao', 'id_board', 'id_tarefa', 'prioridade', 'responsavel_email', 'status', 'tag', 'technologies', 'titulo']",
+      "board_membro: columns actual=['board_id', 'id', 'tag', 'usuario_email'] expected=['board_id', 'id', 'participation_type', 'project_role', 'tag', 'usuario_email', 'weekly_hours']",
+      "board_membro: constraints actual=[('f', ('board_id',), 'public', 'board', ('id_board',), 'a', 'a', 's'), ('f', ('usuario_email',), 'public', 'usuario', ('email',), 'a', 'a', 's'), ('p', ('id',))] expected=[('c', 'ck_board_membro_weekly_hours', 'weekly_hoursisnullorweekly_hours>=0andweekly_hours<=168'), ('f', ('board_id',), 'public', 'board', ('id_board',), 'a', 'a', 's'), ('f', ('usuario_email',), 'public', 'usuario', ('email',), 'a', 'a', 's'), ('p', ('id',)), ('u', 'uq_board_membro', ('board_id', 'usuario_email'))]"
+    ],
+    "e5b8c3a1f206": [
+      "tables actual=['public.board', 'public.board_membro', 'public.chatia', 'public.tarefa', 'public.usuario'] expected=['public.board', 'public.board_membro', 'public.board_repository', 'public.chatia', 'public.github_installation', 'public.perfil_profissional', 'public.tarefa', 'public.tarefa_coluna_historico', 'public.usuario']",
+      "board: columns actual=['id_board', 'nome', 'usuario_email'] expected=['id_board', 'nome', 'sprint_duracao_dias', 'sprint_encerrada_em', 'sprint_inicio', 'sprint_total', 'usuario_email']",
+      "board: constraints actual=[('f', ('usuario_email',), 'public', 'usuario', ('email',), 'a', 'a', 's'), ('p', ('id_board',))] expected=[('c', 'ck_board_sprint_duracao_dias', 'sprint_duracao_diasisnullorsprint_duracao_diasin7,14'), ('f', ('usuario_email',), 'public', 'usuario', ('email',), 'a', 'a', 's'), ('p', ('id_board',))]",
+      "tarefa: columns actual=['data_fim', 'data_inicio', 'dependencia_id', 'descricao', 'id_board', 'id_tarefa', 'prioridade', 'responsavel_email', 'status', 'tag', 'titulo'] expected=['complexity', 'data_fim', 'data_inicio', 'dependencia_id', 'descricao', 'id_board', 'id_tarefa', 'previsao_dias', 'previsao_esforco_horas', 'prioridade', 'responsavel_email', 'status', 'tag', 'technologies', 'titulo']",
+      "board_membro: columns actual=['board_id', 'id', 'tag', 'usuario_email'] expected=['board_id', 'id', 'participation_type', 'project_role', 'tag', 'usuario_email', 'weekly_hours']",
+      "board_membro: constraints actual=[('f', ('board_id',), 'public', 'board', ('id_board',), 'a', 'a', 's'), ('f', ('usuario_email',), 'public', 'usuario', ('email',), 'a', 'a', 's'), ('p', ('id',))] expected=[('c', 'ck_board_membro_weekly_hours', 'weekly_hoursisnullorweekly_hours>=0andweekly_hours<=168'), ('f', ('board_id',), 'public', 'board', ('id_board',), 'a', 'a', 's'), ('f', ('usuario_email',), 'public', 'usuario', ('email',), 'a', 'a', 's'), ('p', ('id',)), ('u', 'uq_board_membro', ('board_id', 'usuario_email'))]"
+    ],
+    "a1c9e4b2f703": [
+      "tables actual=['public.board', 'public.board_membro', 'public.chatia', 'public.tarefa', 'public.usuario'] expected=['public.board', 'public.board_membro', 'public.board_repository', 'public.chatia', 'public.github_installation', 'public.perfil_profissional', 'public.tarefa', 'public.tarefa_coluna_historico', 'public.tarefa_comentario', 'public.usuario']",
+      "board: columns actual=['id_board', 'nome', 'usuario_email'] expected=['id_board', 'nome', 'sprint_duracao_dias', 'sprint_encerrada_em', 'sprint_inicio', 'sprint_total', 'usuario_email']",
+      "board: constraints actual=[('f', ('usuario_email',), 'public', 'usuario', ('email',), 'a', 'a', 's'), ('p', ('id_board',))] expected=[('c', 'ck_board_sprint_duracao_dias', 'sprint_duracao_diasisnullorsprint_duracao_diasin7,14'), ('f', ('usuario_email',), 'public', 'usuario', ('email',), 'a', 'a', 's'), ('p', ('id_board',))]",
+      "tarefa: columns actual=['data_fim', 'data_inicio', 'dependencia_id', 'descricao', 'id_board', 'id_tarefa', 'prioridade', 'responsavel_email', 'status', 'tag', 'titulo'] expected=['complexity', 'data_fim', 'data_inicio', 'dependencia_id', 'descricao', 'id_board', 'id_tarefa', 'previsao_dias', 'previsao_esforco_horas', 'prioridade', 'responsavel_email', 'status', 'tag', 'technologies', 'titulo']",
+      "board_membro: columns actual=['board_id', 'id', 'tag', 'usuario_email'] expected=['board_id', 'id', 'participation_type', 'project_role', 'tag', 'usuario_email', 'weekly_hours']",
+      "board_membro: constraints actual=[('f', ('board_id',), 'public', 'board', ('id_board',), 'a', 'a', 's'), ('f', ('usuario_email',), 'public', 'usuario', ('email',), 'a', 'a', 's'), ('p', ('id',))] expected=[('c', 'ck_board_membro_weekly_hours', 'weekly_hoursisnullorweekly_hours>=0andweekly_hours<=168'), ('f', ('board_id',), 'public', 'board', ('id_board',), 'a', 'a', 's'), ('f', ('usuario_email',), 'public', 'usuario', ('email',), 'a', 'a', 's'), ('p', ('id',)), ('u', 'uq_board_membro', ('board_id', 'usuario_email'))]"
+    ],
+    "b2d8f5c1a014": [
+      "tables actual=['public.board', 'public.board_membro', 'public.chatia', 'public.tarefa', 'public.usuario'] expected=['public.board', 'public.board_membro', 'public.board_repository', 'public.chatia', 'public.github_installation', 'public.perfil_profissional', 'public.tarefa', 'public.tarefa_coluna_historico', 'public.tarefa_comentario', 'public.usuario']",
+      "board: columns actual=['id_board', 'nome', 'usuario_email'] expected=['id_board', 'nome', 'sprint_duracao_dias', 'sprint_encerrada_em', 'sprint_inicio', 'sprint_total', 'usuario_email']",
+      "board: constraints actual=[('f', ('usuario_email',), 'public', 'usuario', ('email',), 'a', 'a', 's'), ('p', ('id_board',))] expected=[('c', 'ck_board_sprint_duracao_dias', 'sprint_duracao_diasisnullorsprint_duracao_diasin7,14'), ('f', ('usuario_email',), 'public', 'usuario', ('email',), 'a', 'a', 's'), ('p', ('id_board',))]",
+      "tarefa: columns actual=['data_fim', 'data_inicio', 'dependencia_id', 'descricao', 'id_board', 'id_tarefa', 'prioridade', 'responsavel_email', 'status', 'tag', 'titulo'] expected=['complexity', 'data_fim', 'data_inicio', 'dependencia_id', 'descricao', 'id_board', 'id_tarefa', 'previsao_dias', 'previsao_esforco_horas', 'prioridade', 'resolucoes', 'responsavel_email', 'status', 'tag', 'technologies', 'titulo']",
+      "board_membro: columns actual=['board_id', 'id', 'tag', 'usuario_email'] expected=['board_id', 'id', 'participation_type', 'project_role', 'tag', 'usuario_email', 'weekly_hours']",
+      "board_membro: constraints actual=[('f', ('board_id',), 'public', 'board', ('id_board',), 'a', 'a', 's'), ('f', ('usuario_email',), 'public', 'usuario', ('email',), 'a', 'a', 's'), ('p', ('id',))] expected=[('c', 'ck_board_membro_weekly_hours', 'weekly_hoursisnullorweekly_hours>=0andweekly_hours<=168'), ('f', ('board_id',), 'public', 'board', ('id_board',), 'a', 'a', 's'), ('f', ('usuario_email',), 'public', 'usuario', ('email',), 'a', 'a', 's'), ('p', ('id',)), ('u', 'uq_board_membro', ('board_id', 'usuario_email'))]"
+    ],
+    "c8f3d1a6e902": [
+      "tables actual=['public.board', 'public.board_membro', 'public.chatia', 'public.tarefa', 'public.usuario'] expected=['public.board', 'public.board_membro', 'public.board_repository', 'public.chatia', 'public.github_installation', 'public.perfil_profissional', 'public.tarefa', 'public.tarefa_coluna_historico', 'public.tarefa_comentario', 'public.usuario']",
+      "board: columns actual=['id_board', 'nome', 'usuario_email'] expected=['id_board', 'nome', 'sprint_duracao_dias', 'sprint_encerrada_em', 'sprint_inicio', 'sprint_total', 'usuario_email']",
+      "board: constraints actual=[('f', ('usuario_email',), 'public', 'usuario', ('email',), 'a', 'a', 's'), ('p', ('id_board',))] expected=[('c', 'ck_board_sprint_duracao_dias', 'sprint_duracao_diasisnullorsprint_duracao_diasin7,14'), ('f', ('usuario_email',), 'public', 'usuario', ('email',), 'a', 'a', 's'), ('p', ('id_board',))]",
+      "tarefa: columns actual=['data_fim', 'data_inicio', 'dependencia_id', 'descricao', 'id_board', 'id_tarefa', 'prioridade', 'responsavel_email', 'status', 'tag', 'titulo'] expected=['complexity', 'data_fim', 'data_inicio', 'dependencia_id', 'descricao', 'focos', 'id_board', 'id_tarefa', 'previsao_dias', 'previsao_esforco_horas', 'prioridade', 'resolucoes', 'responsavel_email', 'status', 'tag', 'technologies', 'titulo']",
+      "tarefa.responsavel_email: type/nullability/identity/generated differs",
+      "board_membro: columns actual=['board_id', 'id', 'tag', 'usuario_email'] expected=['board_id', 'id', 'participation_type', 'project_role', 'tag', 'usuario_email', 'weekly_hours']",
+      "board_membro: constraints actual=[('f', ('board_id',), 'public', 'board', ('id_board',), 'a', 'a', 's'), ('f', ('usuario_email',), 'public', 'usuario', ('email',), 'a', 'a', 's'), ('p', ('id',))] expected=[('c', 'ck_board_membro_weekly_hours', 'weekly_hoursisnullorweekly_hours>=0andweekly_hours<=168'), ('f', ('board_id',), 'public', 'board', ('id_board',), 'a', 'a', 's'), ('f', ('usuario_email',), 'public', 'usuario', ('email',), 'a', 'a', 's'), ('p', ('id',)), ('u', 'uq_board_membro', ('board_id', 'usuario_email'))]"
+    ]
+  },
+  "counts": {
+    "alembic_version": 1,
+    "board": 34,
+    "board_membro": 71,
+    "chatia": 0,
+    "tarefa": 150,
+    "usuario": 58
+  },
+  "event_triggers": 0,
+  "table_policies": [
+    {
+      "relname": "alembic_version",
+      "relrowsecurity": false,
+      "relforcerowsecurity": false,
+      "triggers": 0,
+      "rules": 0
+    },
+    {
+      "relname": "board",
+      "relrowsecurity": false,
+      "relforcerowsecurity": false,
+      "triggers": 0,
+      "rules": 0
+    },
+    {
+      "relname": "board_membro",
+      "relrowsecurity": false,
+      "relforcerowsecurity": false,
+      "triggers": 0,
+      "rules": 0
+    },
+    {
+      "relname": "chatia",
+      "relrowsecurity": false,
+      "relforcerowsecurity": false,
+      "triggers": 0,
+      "rules": 0
+    },
+    {
+      "relname": "tarefa",
+      "relrowsecurity": false,
+      "relforcerowsecurity": false,
+      "triggers": 0,
+      "rules": 0
+    },
+    {
+      "relname": "usuario",
+      "relrowsecurity": false,
+      "relforcerowsecurity": false,
+      "triggers": 0,
+      "rules": 0
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "revision_before": "c47e9c7c63ff",
+  "reconciled_revision": "0e12730e1993",
+  "revision_after": "c8f3d1a6e902",
+  "applied": [
+    "b67af7761999",
+    "a6a91b755ce7",
+    "dfdbe7ec3b9b",
+    "0bae7c4a41ad",
+    "820d7c1eb3de",
+    "c3f1a9d27b4e",
+    "d4a7e2b91c05",
+    "e5b8c3a1f206",
+    "a1c9e4b2f703",
+    "b2d8f5c1a014",
+    "c8f3d1a6e902"
+  ],
+  "rows_preserved": {
+    "board": 34,
+    "board_membro": 71,
+    "chatia": 0,
+    "tarefa": 150,
+    "usuario": 58
+  },
+  "all_original_column_fingerprints_equal": true,
+  "history_backfill_rows": 150,
+  "final_schema_differences": [],
+  "committed": true
+}

@@ -1,0 +1,711 @@
+[
+  {
+    "rls": false,
+    "kind": "r",
+    "rules": 0,
+    "table": "alembic_version",
+    "schema": "public",
+    "columns": [
+      {
+        "name": "version_num",
+        "type": "character varying(32)",
+        "default": null,
+        "identity": "",
+        "nullable": false,
+        "generated": ""
+      }
+    ],
+    "indexes": [
+      {
+        "name": "alembic_version_pkc",
+        "ready": true,
+        "valid": true,
+        "method": "btree",
+        "unique": true,
+        "columns": [
+          "version_num"
+        ],
+        "primary": true,
+        "predicate": null,
+        "constraint": true,
+        "expressions": null
+      }
+    ],
+    "forced_rls": false,
+    "constraints": [
+      {
+        "kind": "p",
+        "name": "alembic_version_pkc",
+        "match": " ",
+        "delete": " ",
+        "update": " ",
+        "columns": [
+          "version_num"
+        ],
+        "deferred": false,
+        "validated": true,
+        "deferrable": false,
+        "definition": "PRIMARY KEY (version_num)",
+        "target_table": null,
+        "target_schema": null,
+        "target_columns": null
+      }
+    ],
+    "user_triggers": 0
+  },
+  {
+    "rls": false,
+    "kind": "r",
+    "rules": 0,
+    "table": "board",
+    "schema": "public",
+    "columns": [
+      {
+        "name": "id_board",
+        "type": "integer",
+        "default": "nextval('board_id_board_seq'::regclass)",
+        "identity": "",
+        "nullable": false,
+        "generated": ""
+      },
+      {
+        "name": "nome",
+        "type": "character varying",
+        "default": null,
+        "identity": "",
+        "nullable": true,
+        "generated": ""
+      },
+      {
+        "name": "usuario_email",
+        "type": "character varying",
+        "default": null,
+        "identity": "",
+        "nullable": false,
+        "generated": ""
+      }
+    ],
+    "indexes": [
+      {
+        "name": "board_pkey",
+        "ready": true,
+        "valid": true,
+        "method": "btree",
+        "unique": true,
+        "columns": [
+          "id_board"
+        ],
+        "primary": true,
+        "predicate": null,
+        "constraint": true,
+        "expressions": null
+      },
+      {
+        "name": "ix_board_id_board",
+        "ready": true,
+        "valid": true,
+        "method": "btree",
+        "unique": false,
+        "columns": [
+          "id_board"
+        ],
+        "primary": false,
+        "predicate": null,
+        "constraint": false,
+        "expressions": null
+      }
+    ],
+    "forced_rls": false,
+    "constraints": [
+      {
+        "kind": "p",
+        "name": "board_pkey",
+        "match": " ",
+        "delete": " ",
+        "update": " ",
+        "columns": [
+          "id_board"
+        ],
+        "deferred": false,
+        "validated": true,
+        "deferrable": false,
+        "definition": "PRIMARY KEY (id_board)",
+        "target_table": null,
+        "target_schema": null,
+        "target_columns": null
+      },
+      {
+        "kind": "f",
+        "name": "board_usuario_email_fkey",
+        "match": "s",
+        "delete": "a",
+        "update": "a",
+        "columns": [
+          "usuario_email"
+        ],
+        "deferred": false,
+        "validated": true,
+        "deferrable": false,
+        "definition": "FOREIGN KEY (usuario_email) REFERENCES usuario(email)",
+        "target_table": "usuario",
+        "target_schema": "public",
+        "target_columns": [
+          "email"
+        ]
+      }
+    ],
+    "user_triggers": 0
+  },
+  {
+    "rls": false,
+    "kind": "r",
+    "rules": 0,
+    "table": "board_membro",
+    "schema": "public",
+    "columns": [
+      {
+        "name": "id",
+        "type": "integer",
+        "default": "nextval('board_membro_id_seq'::regclass)",
+        "identity": "",
+        "nullable": false,
+        "generated": ""
+      },
+      {
+        "name": "board_id",
+        "type": "integer",
+        "default": null,
+        "identity": "",
+        "nullable": false,
+        "generated": ""
+      },
+      {
+        "name": "usuario_email",
+        "type": "character varying",
+        "default": null,
+        "identity": "",
+        "nullable": false,
+        "generated": ""
+      },
+      {
+        "name": "tag",
+        "type": "character varying",
+        "default": null,
+        "identity": "",
+        "nullable": true,
+        "generated": ""
+      }
+    ],
+    "indexes": [
+      {
+        "name": "board_membro_pkey",
+        "ready": true,
+        "valid": true,
+        "method": "btree",
+        "unique": true,
+        "columns": [
+          "id"
+        ],
+        "primary": true,
+        "predicate": null,
+        "constraint": true,
+        "expressions": null
+      },
+      {
+        "name": "ix_board_membro_id",
+        "ready": true,
+        "valid": true,
+        "method": "btree",
+        "unique": false,
+        "columns": [
+          "id"
+        ],
+        "primary": false,
+        "predicate": null,
+        "constraint": false,
+        "expressions": null
+      }
+    ],
+    "forced_rls": false,
+    "constraints": [
+      {
+        "kind": "p",
+        "name": "board_membro_pkey",
+        "match": " ",
+        "delete": " ",
+        "update": " ",
+        "columns": [
+          "id"
+        ],
+        "deferred": false,
+        "validated": true,
+        "deferrable": false,
+        "definition": "PRIMARY KEY (id)",
+        "target_table": null,
+        "target_schema": null,
+        "target_columns": null
+      },
+      {
+        "kind": "f",
+        "name": "board_membro_board_id_fkey",
+        "match": "s",
+        "delete": "a",
+        "update": "a",
+        "columns": [
+          "board_id"
+        ],
+        "deferred": false,
+        "validated": true,
+        "deferrable": false,
+        "definition": "FOREIGN KEY (board_id) REFERENCES board(id_board)",
+        "target_table": "board",
+        "target_schema": "public",
+        "target_columns": [
+          "id_board"
+        ]
+      },
+      {
+        "kind": "f",
+        "name": "board_membro_usuario_email_fkey",
+        "match": "s",
+        "delete": "a",
+        "update": "a",
+        "columns": [
+          "usuario_email"
+        ],
+        "deferred": false,
+        "validated": true,
+        "deferrable": false,
+        "definition": "FOREIGN KEY (usuario_email) REFERENCES usuario(email)",
+        "target_table": "usuario",
+        "target_schema": "public",
+        "target_columns": [
+          "email"
+        ]
+      }
+    ],
+    "user_triggers": 0
+  },
+  {
+    "rls": false,
+    "kind": "r",
+    "rules": 0,
+    "table": "chatia",
+    "schema": "public",
+    "columns": [
+      {
+        "name": "id_chat",
+        "type": "integer",
+        "default": "nextval('chatia_id_chat_seq'::regclass)",
+        "identity": "",
+        "nullable": false,
+        "generated": ""
+      },
+      {
+        "name": "pergunta",
+        "type": "character varying",
+        "default": null,
+        "identity": "",
+        "nullable": true,
+        "generated": ""
+      },
+      {
+        "name": "resposta",
+        "type": "character varying",
+        "default": null,
+        "identity": "",
+        "nullable": true,
+        "generated": ""
+      },
+      {
+        "name": "usuario_email",
+        "type": "character varying",
+        "default": null,
+        "identity": "",
+        "nullable": false,
+        "generated": ""
+      }
+    ],
+    "indexes": [
+      {
+        "name": "chatia_pkey",
+        "ready": true,
+        "valid": true,
+        "method": "btree",
+        "unique": true,
+        "columns": [
+          "id_chat"
+        ],
+        "primary": true,
+        "predicate": null,
+        "constraint": true,
+        "expressions": null
+      },
+      {
+        "name": "ix_chatia_id_chat",
+        "ready": true,
+        "valid": true,
+        "method": "btree",
+        "unique": false,
+        "columns": [
+          "id_chat"
+        ],
+        "primary": false,
+        "predicate": null,
+        "constraint": false,
+        "expressions": null
+      }
+    ],
+    "forced_rls": false,
+    "constraints": [
+      {
+        "kind": "p",
+        "name": "chatia_pkey",
+        "match": " ",
+        "delete": " ",
+        "update": " ",
+        "columns": [
+          "id_chat"
+        ],
+        "deferred": false,
+        "validated": true,
+        "deferrable": false,
+        "definition": "PRIMARY KEY (id_chat)",
+        "target_table": null,
+        "target_schema": null,
+        "target_columns": null
+      },
+      {
+        "kind": "f",
+        "name": "chatia_usuario_email_fkey",
+        "match": "s",
+        "delete": "a",
+        "update": "a",
+        "columns": [
+          "usuario_email"
+        ],
+        "deferred": false,
+        "validated": true,
+        "deferrable": false,
+        "definition": "FOREIGN KEY (usuario_email) REFERENCES usuario(email)",
+        "target_table": "usuario",
+        "target_schema": "public",
+        "target_columns": [
+          "email"
+        ]
+      }
+    ],
+    "user_triggers": 0
+  },
+  {
+    "rls": false,
+    "kind": "r",
+    "rules": 0,
+    "table": "tarefa",
+    "schema": "public",
+    "columns": [
+      {
+        "name": "id_tarefa",
+        "type": "integer",
+        "default": "nextval('tarefa_id_tarefa_seq'::regclass)",
+        "identity": "",
+        "nullable": false,
+        "generated": ""
+      },
+      {
+        "name": "id_board",
+        "type": "integer",
+        "default": null,
+        "identity": "",
+        "nullable": false,
+        "generated": ""
+      },
+      {
+        "name": "responsavel_email",
+        "type": "character varying",
+        "default": null,
+        "identity": "",
+        "nullable": false,
+        "generated": ""
+      },
+      {
+        "name": "dependencia_id",
+        "type": "integer",
+        "default": null,
+        "identity": "",
+        "nullable": true,
+        "generated": ""
+      },
+      {
+        "name": "titulo",
+        "type": "character varying",
+        "default": null,
+        "identity": "",
+        "nullable": false,
+        "generated": ""
+      },
+      {
+        "name": "descricao",
+        "type": "text",
+        "default": null,
+        "identity": "",
+        "nullable": true,
+        "generated": ""
+      },
+      {
+        "name": "status",
+        "type": "character varying",
+        "default": null,
+        "identity": "",
+        "nullable": false,
+        "generated": ""
+      },
+      {
+        "name": "tag",
+        "type": "character varying",
+        "default": null,
+        "identity": "",
+        "nullable": true,
+        "generated": ""
+      },
+      {
+        "name": "data_inicio",
+        "type": "timestamp without time zone",
+        "default": null,
+        "identity": "",
+        "nullable": true,
+        "generated": ""
+      },
+      {
+        "name": "data_fim",
+        "type": "timestamp without time zone",
+        "default": null,
+        "identity": "",
+        "nullable": true,
+        "generated": ""
+      },
+      {
+        "name": "prioridade",
+        "type": "character varying",
+        "default": null,
+        "identity": "",
+        "nullable": true,
+        "generated": ""
+      }
+    ],
+    "indexes": [
+      {
+        "name": "tarefa_pkey",
+        "ready": true,
+        "valid": true,
+        "method": "btree",
+        "unique": true,
+        "columns": [
+          "id_tarefa"
+        ],
+        "primary": true,
+        "predicate": null,
+        "constraint": true,
+        "expressions": null
+      },
+      {
+        "name": "ix_tarefa_id_tarefa",
+        "ready": true,
+        "valid": true,
+        "method": "btree",
+        "unique": false,
+        "columns": [
+          "id_tarefa"
+        ],
+        "primary": false,
+        "predicate": null,
+        "constraint": false,
+        "expressions": null
+      },
+      {
+        "name": "ix_tarefa_status",
+        "ready": true,
+        "valid": true,
+        "method": "btree",
+        "unique": false,
+        "columns": [
+          "status"
+        ],
+        "primary": false,
+        "predicate": null,
+        "constraint": false,
+        "expressions": null
+      }
+    ],
+    "forced_rls": false,
+    "constraints": [
+      {
+        "kind": "p",
+        "name": "tarefa_pkey",
+        "match": " ",
+        "delete": " ",
+        "update": " ",
+        "columns": [
+          "id_tarefa"
+        ],
+        "deferred": false,
+        "validated": true,
+        "deferrable": false,
+        "definition": "PRIMARY KEY (id_tarefa)",
+        "target_table": null,
+        "target_schema": null,
+        "target_columns": null
+      },
+      {
+        "kind": "f",
+        "name": "tarefa_id_board_fkey",
+        "match": "s",
+        "delete": "a",
+        "update": "a",
+        "columns": [
+          "id_board"
+        ],
+        "deferred": false,
+        "validated": true,
+        "deferrable": false,
+        "definition": "FOREIGN KEY (id_board) REFERENCES board(id_board)",
+        "target_table": "board",
+        "target_schema": "public",
+        "target_columns": [
+          "id_board"
+        ]
+      },
+      {
+        "kind": "f",
+        "name": "tarefa_responsavel_email_fkey",
+        "match": "s",
+        "delete": "a",
+        "update": "a",
+        "columns": [
+          "responsavel_email"
+        ],
+        "deferred": false,
+        "validated": true,
+        "deferrable": false,
+        "definition": "FOREIGN KEY (responsavel_email) REFERENCES usuario(email)",
+        "target_table": "usuario",
+        "target_schema": "public",
+        "target_columns": [
+          "email"
+        ]
+      },
+      {
+        "kind": "f",
+        "name": "tarefa_dependencia_id_fkey",
+        "match": "s",
+        "delete": "n",
+        "update": "a",
+        "columns": [
+          "dependencia_id"
+        ],
+        "deferred": false,
+        "validated": true,
+        "deferrable": false,
+        "definition": "FOREIGN KEY (dependencia_id) REFERENCES tarefa(id_tarefa) ON DELETE SET NULL",
+        "target_table": "tarefa",
+        "target_schema": "public",
+        "target_columns": [
+          "id_tarefa"
+        ]
+      }
+    ],
+    "user_triggers": 0
+  },
+  {
+    "rls": false,
+    "kind": "r",
+    "rules": 0,
+    "table": "usuario",
+    "schema": "public",
+    "columns": [
+      {
+        "name": "email",
+        "type": "character varying",
+        "default": null,
+        "identity": "",
+        "nullable": false,
+        "generated": ""
+      },
+      {
+        "name": "nome",
+        "type": "character varying",
+        "default": null,
+        "identity": "",
+        "nullable": true,
+        "generated": ""
+      },
+      {
+        "name": "senha_hash",
+        "type": "text",
+        "default": null,
+        "identity": "",
+        "nullable": true,
+        "generated": ""
+      },
+      {
+        "name": "avatar_url",
+        "type": "character varying",
+        "default": null,
+        "identity": "",
+        "nullable": true,
+        "generated": ""
+      }
+    ],
+    "indexes": [
+      {
+        "name": "usuario_pkey",
+        "ready": true,
+        "valid": true,
+        "method": "btree",
+        "unique": true,
+        "columns": [
+          "email"
+        ],
+        "primary": true,
+        "predicate": null,
+        "constraint": true,
+        "expressions": null
+      },
+      {
+        "name": "ix_usuario_email",
+        "ready": true,
+        "valid": true,
+        "method": "btree",
+        "unique": false,
+        "columns": [
+          "email"
+        ],
+        "primary": false,
+        "predicate": null,
+        "constraint": false,
+        "expressions": null
+      }
+    ],
+    "forced_rls": false,
+    "constraints": [
+      {
+        "kind": "p",
+        "name": "usuario_pkey",
+        "match": " ",
+        "delete": " ",
+        "update": " ",
+        "columns": [
+          "email"
+        ],
+        "deferred": false,
+        "validated": true,
+        "deferrable": false,
+        "definition": "PRIMARY KEY (email)",
+        "target_table": null,
+        "target_schema": null,
+        "target_columns": null
+      }
+    ],
+    "user_triggers": 0
+  }
+]
