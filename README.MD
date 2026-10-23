@@ -212,7 +212,7 @@ Toda tarefa devolvida pela API (criação, edição e listagens) traz três camp
 - **predictedEffortHours:** esforço estimado pelo modelo, em horas.
 - **daysTaken:** dias que a tarefa levou. Começa a contar ao sair do BACKLOG e congela ao chegar em DONE.
 
-As datas `startDate`/`endDate` não são mais enviadas pelo front; se não vierem no `PUT`, o valor salvo é mantido.
+`startDate` é informado ao criar a tarefa (se não vier no `PUT`, o valor salvo é mantido). `endDate` **não é informado**: o backend calcula e ignora o que o cliente enviar. Ele é o último dia útil do prazo previsto contado a partir do `startDate` (sábado e domingo não contam, feriados não são considerados; 1 dia útil termina no mesmo dia). Se o `startDate` mudar, o `endDate` é recalculado com a previsão já salva, sem chamar o modelo de novo. Sem previsão, `endDate` fica `null`. Em BACKLOG `daysTaken` é sempre 0.
 
 **Como a previsão é feita:** ao criar a tarefa (e ao editar responsável, complexidade ou prioridade) o backend chama `POST {PRAZO_MODEL_URL}/estimar-prazo` com:
 

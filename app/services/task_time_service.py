@@ -26,6 +26,13 @@ def _dia(momento: datetime) -> date:
     return _com_timezone(momento).astimezone(FUSO_DIAS).date()
 
 
+def dia_de_criacao(tarefa: models.Tarefa) -> date:
+    """Dia (Brasília) em que a tarefa foi criada: entrada na primeira coluna."""
+    if tarefa.historico_colunas:
+        return _dia(tarefa.historico_colunas[0].entrou_em)
+    return _dia(_agora())
+
+
 def _passagem_aberta(
     tarefa: models.Tarefa,
 ) -> Optional[models.TarefaColunaHistorico]:

@@ -10,7 +10,9 @@ tarefa: a previsão simplesmente fica vazia e é tentada de novo na próxima edi
 """
 
 import logging
+import math
 import unicodedata
+from datetime import date, datetime, time, timedelta
 from typing import Optional
 
 import requests
@@ -18,6 +20,7 @@ from sqlalchemy.orm import Session
 
 from app import models
 from app.config import PRAZO_MODEL_TIMEOUT, PRAZO_MODEL_URL
+from app.services import task_time_service
 
 logger = logging.getLogger(__name__)
 
@@ -165,4 +168,47 @@ def atualizar_previsao(db: Session, tarefa: models.Tarefa) -> bool:
 
     tarefa.previsao_dias = resultado["prazo_dias"]
     tarefa.previsao_esforco_horas = resultado["esforco_horas"]
+    _definir_datas(tarefa)
     return True
+
+
+def ultimo_dia_util(inicio: date, dias_uteis: int) -> date:
+    """Dia em que se completa o `dias_uteis`-ésimo dia útil contando de `inicio`.
+
+    O próprio dia de início conta como o dia 1 se for dia útil (1 dia útil termina
+    no mesmo dia, como na contagem de dias da tarefa). Sábado e domingo não contam;
+    feriados não são considerados.
+    """
+    dia = inicio
+    contados = 0
+    while True:
+        if dia.weekday() < 5:
+            contados += 1
+            if contados >= dias_uteis:
+                return dia
+        dia += timedelta(days=1)
+
+
+def recalcular_datas(tarefa: models.Tarefa) -> bool:
+    """Refaz a data de fim com a previsão já salva (ex: o início foi alterado)."""
+    if tarefa.previsao_dias is None:
+        return False
+    _definir_datas(tarefa)
+    return True
+
+
+def _definir_datas(tarefa: models.Tarefa) -> None:
+    """Data de fim a partir do início informado e da previsão.
+
+    O início é o informado na tarefa (se não houver, usa o dia da criação); o fim
+    é o último dia útil do prazo previsto, contado a partir do início.
+    """
+    inicio = (
+        tarefa.data_inicio.date()
+        if tarefa.data_inicio
+        else task_time_service.dia_de_criacao(tarefa)
+    )
+    dias = max(1, math.ceil(tarefa.previsao_dias))
+    fim = ultimo_dia_util(inicio, dias)
+    tarefa.data_inicio = datetime.combine(inicio, time.min)
+    tarefa.data_fim = datetime.combine(fim, time.min)

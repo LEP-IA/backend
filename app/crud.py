@@ -50,7 +50,7 @@ def create_task(db: Session, task_in: schemas.TaskCreate) -> models.Tarefa:
         status=task_in.status,
         tag=task_in.tag,
         data_inicio=task_in.startDate,
-        data_fim=task_in.endDate,
+        data_fim=None,  # calculada pela previsão (início + prazo previsto)
         dependencia_id=dependencia.id_tarefa if dependencia else None,
         prioridade=task_in.prioridade,
         technologies=task_in.technologies,
@@ -67,11 +67,13 @@ def create_task(db: Session, task_in: schemas.TaskCreate) -> models.Tarefa:
     return db_task
 
 
-def _atualizar_previsao(db: Session, task_db: models.Tarefa) -> None:
+def _atualizar_previsao(db: Session, task_db: models.Tarefa) -> bool:
     """Pede a previsão ao prazo_model e salva. Falhas não afetam a tarefa."""
     if prazo_service.atualizar_previsao(db, task_db):
         db.commit()
         db.refresh(task_db)
+        return True
+    return False
 
 
 def update_task(db: Session, task_id: int, task_in: schemas.TaskUpdate) -> models.Tarefa | None:
@@ -93,6 +95,7 @@ def update_task(db: Session, task_id: int, task_in: schemas.TaskUpdate) -> model
         task_db.complexity,
         task_db.prioridade,
     )
+    inicio_anterior = task_db.data_inicio
 
     task_db.titulo = task_in.title
     task_db.descricao = task_in.description
@@ -100,11 +103,11 @@ def update_task(db: Session, task_id: int, task_in: schemas.TaskUpdate) -> model
     task_time_service.registrar_mudanca_status(db, task_db, task_in.status)
     task_db.status = task_in.status
     task_db.tag = task_in.tag
-    # O front não envia mais as datas; só altera se vierem na requisição
+    # A data de início é informada; a de fim é sempre calculada pela previsão
+    # (endDate enviado pelo cliente é ignorado). Sem startDate na requisição,
+    # mantém a data salva.
     if "startDate" in task_in.model_fields_set:
         task_db.data_inicio = task_in.startDate
-    if "endDate" in task_in.model_fields_set:
-        task_db.data_fim = task_in.endDate
     task_db.responsavel_email = responsavel.email
     task_db.dependencia_id = dependencia.id_tarefa if dependencia else None
     task_db.prioridade = task_in.prioridade
@@ -120,8 +123,18 @@ def update_task(db: Session, task_id: int, task_in: schemas.TaskUpdate) -> model
         task_db.prioridade,
     )
     # Também tenta de novo quando a tarefa ainda não tem previsão
+    atualizou = False
     if entrada_atual != entrada_anterior or task_db.previsao_dias is None:
-        _atualizar_previsao(db, task_db)
+        atualizou = _atualizar_previsao(db, task_db)
+
+    # Mudou só o início: a previsão vale, então só move a data de fim
+    if (
+        not atualizou
+        and task_db.data_inicio != inicio_anterior
+        and prazo_service.recalcular_datas(task_db)
+    ):
+        db.commit()
+        db.refresh(task_db)
     return task_db
 
 
