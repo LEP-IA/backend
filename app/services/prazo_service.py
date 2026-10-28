@@ -53,6 +53,8 @@ NIVEIS_DO_MODELO = {
 # A complexidade só é definida depois da análise da IA; sem ela usa o nível médio.
 COMPLEXIDADE_PADRAO = "Média"
 PRIORIDADE_PADRAO = "Média"
+# Se o membro ainda não informou horas no board, o modelo usa este valor.
+HORAS_SEMANAIS_PADRAO = 20.0
 
 
 def _sem_acento(texto: str) -> str:
@@ -83,8 +85,7 @@ def _normalizar_nivel(valor: Optional[str], padrao: str) -> str:
 def montar_entrada(db: Session, tarefa: models.Tarefa) -> Optional[dict]:
     """Monta o corpo enviado ao modelo.
 
-    Retorna None quando falta algum dado indispensável: sem as horas semanais
-    do responsável no board não há como calcular o prazo.
+    Retorna None só sem responsável. Sem horas no board, usa 20h para todo mundo.
     """
     if not tarefa.responsavel_email:
         return None
@@ -99,7 +100,7 @@ def montar_entrada(db: Session, tarefa: models.Tarefa) -> Optional[dict]:
     )
     horas_semanais = membro.weekly_hours if membro else None
     if not horas_semanais or horas_semanais <= 0:
-        return None
+        horas_semanais = HORAS_SEMANAIS_PADRAO
 
     perfil = (
         db.query(models.PerfilProfissional)
