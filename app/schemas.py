@@ -229,6 +229,10 @@ class SprintStart(BaseModel):
     # Opcional: início da sprint (ex.: meia-noite local do dono). Padrão: agora.
     inicio: Optional[datetime] = None
 
+class SprintEnd(BaseModel):
+    # Opcional: instante de encerramento (ex.: último dia do projeto). Padrão: agora.
+    fim: Optional[datetime] = None
+
 class SprintOut(BaseModel):
     ativa: bool = False
     duracao_dias: Optional[int] = None

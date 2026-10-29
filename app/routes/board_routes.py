@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Body, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, or_
 from app import models, schemas
@@ -305,12 +305,13 @@ def iniciar_sprint(
 @router.post("/{board_id}/sprint/encerrar", response_model=schemas.BoardOut)
 def encerrar_sprint(
     board_id: int,
+    payload: schemas.SprintEnd | None = Body(default=None),
     db: Session = Depends(get_db),
     user: models.Usuario = Depends(get_current_user),
 ):
     board = _get_board_como_dono(db, board_id, user, "encerrar a sprint")
     try:
-        sprint_service.encerrar_sprint(board)
+        sprint_service.encerrar_sprint(board, payload.fim if payload else None)
     except sprint_service.SprintError as exc:
         raise HTTPException(status_code=exc.status_code, detail=str(exc))
     db.commit()

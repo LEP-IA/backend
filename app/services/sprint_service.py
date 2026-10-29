@@ -7,9 +7,8 @@ from app import models, schemas
 DURACOES_VALIDAS = (7, 14)
 
 # O cliente pode mandar o início da sprint alinhado à meia-noite local do dono
-# (assim as sprints trocam de número na virada do dia dele). Aceitamos apenas
-# um início recente para não permitir datas arbitrárias.
-JANELA_INICIO_PASSADO = timedelta(hours=26)
+# (assim as sprints trocam de número na virada do dia dele). Projetos já
+# andamento (ex.: sprints de setembro/outubro) precisam registrar a data real.
 TOLERANCIA_INICIO_FUTURO = timedelta(minutes=5)
 
 
@@ -92,7 +91,7 @@ def iniciar_sprint(
         if inicio.tzinfo is None:
             raise SprintError("O início da sprint precisa informar o fuso horário", 422)
         inicio = inicio.astimezone(timezone.utc)
-        if not (agora - JANELA_INICIO_PASSADO <= inicio <= agora + TOLERANCIA_INICIO_FUTURO):
+        if inicio > agora + TOLERANCIA_INICIO_FUTURO:
             raise SprintError("Início da sprint inválido", 422)
 
     board.sprint_duracao_dias = duracao_dias
@@ -101,11 +100,23 @@ def iniciar_sprint(
     board.sprint_total = None
 
 
-def encerrar_sprint(board: models.Board) -> None:
+def encerrar_sprint(board: models.Board, fim: Optional[datetime] = None) -> None:
     if not sprint_ativa(board):
         raise SprintError("Não há sprint ativa neste board")
 
-    fim = _agora()
+    agora = _agora()
+    if fim is None:
+        fim = agora
+    else:
+        if fim.tzinfo is None:
+            raise SprintError("O encerramento precisa informar o fuso horário", 422)
+        fim = fim.astimezone(timezone.utc)
+        inicio = _com_timezone(board.sprint_inicio)
+        if fim < inicio:
+            raise SprintError("O encerramento não pode ser antes do início", 422)
+        if fim > agora + TOLERANCIA_INICIO_FUTURO:
+            raise SprintError("Encerramento inválido", 422)
+
     board.sprint_encerrada_em = fim
     board.sprint_total = total_sprints(
         _com_timezone(board.sprint_inicio), board.sprint_duracao_dias, fim
