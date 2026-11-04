@@ -191,7 +191,31 @@ def reset_password_confirm(
 
 
 @router.post("/board/set-dono")
-def set_dono_board(data: schemas.SetDonoRequest, db: Session = Depends(get_db)):
+def set_dono_board(
+    data: schemas.SetDonoRequest,
+    db: Session = Depends(get_db),
+    user: models.Usuario = Depends(security.get_current_user),
+):
+    board = db.query(models.Board).filter(models.Board.id_board == data.board_id).first()
+    if not board:
+        raise HTTPException(status_code=404, detail="Projeto não encontrado.")
+
+    is_owner_user = board.usuario_email == user.email
+    is_owner_member = (
+        db.query(models.BoardMembro)
+        .filter(
+            models.BoardMembro.board_id == data.board_id,
+            models.BoardMembro.usuario_email == user.email,
+            models.BoardMembro.tag == "dono",
+        )
+        .first()
+        is not None
+    )
+    if not (is_owner_user or is_owner_member):
+        raise HTTPException(
+            status_code=403, detail="Apenas proprietários podem promover membros."
+        )
+
     membro = (
         db.query(models.BoardMembro)
         .filter(
