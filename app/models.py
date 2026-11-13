@@ -132,6 +132,39 @@ class Board(Base):
         cascade="all, delete-orphan",
     )
 
+    #relacionamento com as colunas do board
+    columns = relationship( 
+        "BoardColumn",
+        back_populates = "board",
+        cascade = "all, delete-orphan",
+    )
+    
+#nova calsse que representa as colunas 
+class BoardColumn(Base):
+    __tablename__ = "board_column"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    board_id = Column(
+        Integer,
+        ForeignKey("board.id_board", ondelete="CASCADE"),
+        nullable=False,
+    )
+
+    status_key = Column(String, nullable=False)
+    nome = Column(String, nullable=False)
+    posicao = Column(Integer, nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint(
+            "board_id",
+            "status_key",
+            name="uq_board_column_status_key",
+        ),
+    )
+
+    board = relationship("Board", back_populates="columns")
+    
 
 class Tarefa(Base):
     __tablename__ = "tarefa"
